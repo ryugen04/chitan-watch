@@ -50,3 +50,14 @@ Then open `http://localhost:4173`.
 - MHLW 国公費・地単公費マスター page: https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html
 
 Do not treat discovered file URLs as permanent. Discover links from seed pages on each crawl.
+
+
+## Source Discovery
+
+Discover current official artifacts from the SSK seed page without hard-coding the latest file URLs:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli discover   https://www.ssk.or.jp/seikyushiharai/titansys/index.html   --allowed-domain www.ssk.or.jp   --allowed-domain www.mhlw.go.jp   --artifact-type master_csv   --artifact-type master_excel   --artifact-type schema   --artifact-type input_guide   --artifact-type manual   --artifact-type examples   --artifact-type faq   --artifact-type mhlw_document   --artifact-type other
+```
+
+The command fetches only seed HTML and emits JSON inventory. It does not download or commit official binary artifacts.

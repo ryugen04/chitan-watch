@@ -6,6 +6,8 @@ from dataclasses import asdict, is_dataclass
 from enum import Enum
 
 from .diff import diff_master_records
+from .discovery import discover_seed_url
+from .models import ArtifactType
 from .events import build_change_bundle
 from .parser import parse_master_csv_file
 
@@ -24,6 +26,13 @@ def main() -> int:
     diff_cmd = sub.add_parser("diff", help="Diff two master CSV snapshots")
     diff_cmd.add_argument("old_csv")
     diff_cmd.add_argument("new_csv")
+
+    discover_cmd = sub.add_parser("discover", help="Discover artifacts from an official seed page")
+    discover_cmd.add_argument("seed_url")
+    discover_cmd.add_argument("--source-id", default="ssk-chitan")
+    discover_cmd.add_argument("--allowed-domain", action="append", dest="allowed_domains")
+    discover_cmd.add_argument("--artifact-type", action="append", dest="artifact_types", choices=[item.value for item in ArtifactType])
+
     args = parser.parse_args()
 
     if args.command == "diff":
@@ -38,6 +47,16 @@ def main() -> int:
         bundle = build_change_bundle(changes, errors=tuple(errors))
         print(json.dumps(bundle, default=encode, ensure_ascii=False, indent=2))
         return 1 if errors else 0
+
+    if args.command == "discover":
+        allowed_domains = tuple(args.allowed_domains or ())
+        if not allowed_domains:
+            parser.error("discover requires at least one --allowed-domain")
+        artifact_types = tuple(ArtifactType(value) for value in (args.artifact_types or ())) or None
+        artifacts = discover_seed_url(args.seed_url, source_id=args.source_id, allowed_domains=allowed_domains, artifact_types=artifact_types)
+        print(json.dumps({"seed_url": args.seed_url, "source_id": args.source_id, "artifacts": artifacts}, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
     return 2
 
 

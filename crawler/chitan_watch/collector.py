@@ -18,14 +18,15 @@ CLASSIFICATION_RULES: tuple[tuple[tuple[str, ...], ArtifactType], ...] = (
 
 def classify_artifact(url: str, title: str = "") -> ArtifactType:
     haystack = f"{url} {title}".lower()
-    path = urlparse(url).path.lower()
-    if path.endswith(".html") or path.endswith(".htm"):
-        return ArtifactType.HTML
-    if "mhlw.go.jp" in urlparse(url).netloc:
-        return ArtifactType.MHLW_DOCUMENT
+    parsed = urlparse(url)
+    path = parsed.path.lower()
     for needles, artifact_type in CLASSIFICATION_RULES:
         if any(needle.lower() in haystack for needle in needles):
             return artifact_type
+    if "mhlw.go.jp" in parsed.netloc.lower():
+        return ArtifactType.MHLW_DOCUMENT
+    if path.endswith(".html") or path.endswith(".htm"):
+        return ArtifactType.HTML
     if path.endswith(".pdf"):
         return ArtifactType.OTHER
     return ArtifactType.OTHER

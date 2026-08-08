@@ -31,3 +31,17 @@ Persist snapshots, raw changes, events, evidence, subscriptions, source health, 
 ## Phase 8: notifications
 
 Implement RSS first, then Slack push, then email/digest scheduling.
+
+
+## ORD-002 completed increment
+
+Implemented deterministic source discovery:
+
+- parse anchor tags with `html.parser`
+- resolve relative URLs with `urljoin`
+- filter by allowed domains
+- classify artifacts with repository rules
+- emit stable JSON through `chitan_watch.cli discover`
+- avoid downloading official binaries during discovery
+
+Next increment should add snapshot metadata and SHA-256 retrieval for selected artifacts, still without storing official binary payloads in Git.
