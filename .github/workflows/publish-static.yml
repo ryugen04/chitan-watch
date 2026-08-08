@@ -1,0 +1,87 @@
+name: Publish static Chitan Watch feed
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 21 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+environment:
+  name: github-pages
+  url: ${{ steps.deployment.outputs.page_url }}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore crawler state cache
+        uses: actions/cache/restore@v4
+        with:
+          path: storage/chitan-watch
+          key: chitan-watch-state-${{ github.run_id }}
+          restore-keys: |
+            chitan-watch-state-
+
+      - name: Derive site URL
+        id: site
+        shell: bash
+        run: |
+          if [ -n "${CHITAN_WATCH_SITE_URL:-}" ]; then
+            echo "url=${CHITAN_WATCH_SITE_URL%/}" >> "$GITHUB_OUTPUT"
+          else
+            repo_name="${GITHUB_REPOSITORY#*/}"
+            echo "url=https://${GITHUB_REPOSITORY_OWNER}.github.io/${repo_name}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          CHITAN_WATCH_SITE_URL: ${{ vars.CHITAN_WATCH_SITE_URL }}
+
+      - name: Run official local crawl
+        env:
+          PYTHONPATH: crawler
+        run: |
+          python3 -m chitan_watch.cli run-official-local             https://www.ssk.or.jp/seikyushiharai/titansys/index.html             --store-dir storage/chitan-watch             --artifact-type master_csv             --previous latest             --run-id "run-${GITHUB_RUN_ID}"             --allow-candidate-mapping
+
+      - name: Export static site
+        env:
+          PYTHONPATH: crawler
+        run: |
+          python3 -m chitan_watch.cli export-static             --store-dir storage/chitan-watch             --output-dir public             --web-dir apps/web             --site-url "${{ steps.site.outputs.url }}"
+
+      - name: Save crawler state cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: storage/chitan-watch
+          key: chitan-watch-state-${{ github.run_id }}
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

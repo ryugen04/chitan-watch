@@ -62,22 +62,27 @@ async function getJson(path) {
   return response.json();
 }
 
+async function loadDataGroup(paths) {
+  const [runsPayload, changesPayload, sourcePayload] = await Promise.all(paths.map(getJson));
+  return {
+    runs: runsPayload.runs ?? [],
+    changes: changesPayload.changes ?? [],
+    sources: sourcePayload.sources ?? [],
+    latest_run_id: sourcePayload.latest_run_id ?? runsPayload.runs?.[0]?.run_id ?? null,
+  };
+}
+
 async function loadState() {
   try {
-    const [runsPayload, changesPayload, sourcePayload] = await Promise.all([
-      getJson("/api/runs"),
-      getJson("/api/changes"),
-      getJson("/api/source-health"),
-    ]);
-    state = {
-      runs: runsPayload.runs ?? [],
-      changes: changesPayload.changes ?? [],
-      sources: sourcePayload.sources ?? [],
-      latest_run_id: sourcePayload.latest_run_id ?? runsPayload.runs?.[0]?.run_id ?? null,
-      apiOnline: true,
-    };
-  } catch (_error) {
-    state = fallbackState;
+    state = { ...(await loadDataGroup(["/api/runs", "/api/changes", "/api/source-health"])), apiOnline: true };
+    return;
+  } catch (_apiError) {
+    try {
+      state = { ...(await loadDataGroup(["static/runs.json", "static/changes.json", "static/source-health.json"])), apiOnline: false, staticExport: true };
+      return;
+    } catch (_staticError) {
+      state = fallbackState;
+    }
   }
 }
 
@@ -177,7 +182,7 @@ function render() {
   const route = (location.hash.replace("#", "") || "changes").split("/")[0];
   const app = document.querySelector("#app");
   document.querySelector("h1").textContent = titleFor(route);
-  document.querySelector(".status-pill").textContent = state.apiOnline ? "API connected" : "Fixture fallback";
+  document.querySelector(".status-pill").textContent = state.apiOnline ? "API connected" : state.staticExport ? "Static export" : "Fixture fallback";
   app.innerHTML = ({
     changes: renderChanges,
     "change-detail": renderDetail,

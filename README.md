@@ -230,3 +230,20 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli rss \
 ```
 
 The Web UI advertises the feed with an RSS auto-discovery link, so normal feed readers can detect it from the site URL.
+
+
+## Static Publishing
+
+Export serverless Web/RSS assets from local run storage:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli export-static \
+  --store-dir storage/chitan-watch \
+  --output-dir public \
+  --web-dir apps/web \
+  --site-url https://<owner>.github.io/<repo>
+```
+
+The exported directory contains `index.html`, `app.js`, `styles.css`, `rss.xml`, `feeds/changes.xml`, and `static/*.json`. `public/` is ignored by Git because it is generated output.
+
+GitHub Actions workflow `.github/workflows/publish-static.yml` can run this on a schedule and deploy to GitHub Pages without custom secrets. See `docs/publication.md` before making the repository public.

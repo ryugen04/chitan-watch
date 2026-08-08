@@ -22,6 +22,7 @@ from .pdf_items import extract_pdf_text, parse_item_candidates
 from .rss import RssFeedOptions, rss_xml_from_store_path
 from .run_state import build_manifest_from_specs, build_master_diff_attachment, evaluate_run, load_manifest, load_specs
 from .snapshot import fetch_snapshot
+from .static_export import export_static_site
 from .xlsx_analysis import analyze_xlsx_source
 
 
@@ -137,6 +138,13 @@ def main() -> int:
     rss_cmd.add_argument("--title", default="Chitan Watch Changes")
     rss_cmd.add_argument("--description", default="地単公費マスターの検知済み変更イベント")
     rss_cmd.add_argument("--max-items", type=int, default=50)
+
+    export_static_cmd = sub.add_parser("export-static", help="Export static Web, JSON, and RSS files for GitHub Pages")
+    export_static_cmd.add_argument("--store-dir", default=str(DEFAULT_STORE_DIR))
+    export_static_cmd.add_argument("--output-dir", default="public")
+    export_static_cmd.add_argument("--web-dir", default="apps/web")
+    export_static_cmd.add_argument("--site-url", default="http://127.0.0.1:8765")
+    export_static_cmd.add_argument("--max-rss-items", type=int, default=50)
 
     args = parser.parse_args()
 
@@ -309,6 +317,17 @@ def main() -> int:
             options=RssFeedOptions(title=args.title, description=args.description, site_url=args.site_url, max_items=args.max_items),
         )
         print(xml, end="")
+        return 0
+
+    if args.command == "export-static":
+        result = export_static_site(
+            store_dir=args.store_dir,
+            output_dir=args.output_dir,
+            web_dir=args.web_dir,
+            site_url=args.site_url,
+            max_rss_items=args.max_rss_items,
+        )
+        print(json.dumps(result, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2

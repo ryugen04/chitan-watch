@@ -6,6 +6,7 @@
   "scripts": {
     "web:dev": "cd apps/web && python3 -m http.server 4173",
     "serve": "PYTHONPATH=crawler python3 -m chitan_watch.cli serve --store-dir storage/chitan-watch --web-dir apps/web",
+    "export:static": "PYTHONPATH=crawler python3 -m chitan_watch.cli export-static --store-dir storage/chitan-watch --output-dir public --web-dir apps/web",
     "test:py": "PYTHONPATH=crawler python3 -m unittest discover -s tests"
   }
 }
