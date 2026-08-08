@@ -8,6 +8,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Iterable
 
+from .change_events import ChangeEventBundle, build_change_event_bundle
 from .csv_analysis import read_bytes
 from .models import ArtifactType, Snapshot
 from .positional_master import DEFAULT_SCHEMA_PATH
@@ -37,8 +38,10 @@ class LocalRunResult:
     evaluation_path: str
     source_spec_path: str
     master_diff_path: str | None
+    change_events_path: str | None
     payload_paths: tuple[str, ...]
     evaluation: CrawlerRunEvaluation
+    change_event_count: int = 0
 
 
 def _now_run_id() -> str:
@@ -73,6 +76,12 @@ class LocalRunStore:
     def runs_dir(self) -> Path:
         return self.root / "runs"
 
+    def list_run_ids(self) -> tuple[str, ...]:
+        runs_dir = self.runs_dir()
+        if not runs_dir.exists():
+            return ()
+        return tuple(sorted(path.name for path in runs_dir.iterdir() if path.is_dir()))
+
     def sources_dir(self) -> Path:
         return self.root / "sources"
 
@@ -91,6 +100,15 @@ class LocalRunStore:
 
     def load_run_manifest(self, run_id: str) -> SnapshotManifest:
         return load_manifest(self.run_dir(run_id) / "manifest.json")
+
+    def load_run_evaluation_json(self, run_id: str) -> dict:
+        return json.loads((self.run_dir(run_id) / "evaluation.json").read_text(encoding="utf-8"))
+
+    def load_run_change_events_json(self, run_id: str) -> dict:
+        path = self.run_dir(run_id) / "change-events.json"
+        if not path.exists():
+            return {"run_id": run_id, "events": []}
+        return json.loads(path.read_text(encoding="utf-8"))
 
     def load_latest_manifest(self, source_id: str) -> tuple[str, SnapshotManifest] | None:
         run_id = self.latest_run_id(source_id)
@@ -150,6 +168,7 @@ class LocalRunStore:
         manifest: SnapshotManifest,
         evaluation: CrawlerRunEvaluation,
         master_diff: MasterDiffAttachment | None = None,
+        change_events: ChangeEventBundle | None = None,
         update_latest: bool = True,
     ) -> LocalRunResult:
         run_dir = self.run_dir(run_id)
@@ -157,12 +176,15 @@ class LocalRunStore:
         manifest_path = run_dir / "manifest.json"
         evaluation_path = run_dir / "evaluation.json"
         master_diff_path = run_dir / "master-diff.json" if master_diff else None
+        change_events_path = run_dir / "change-events.json" if change_events else None
 
         write_json(source_spec_path, {"source_id": source_id, "artifacts": original_specs})
         write_json(manifest_path, manifest)
         write_json(evaluation_path, evaluation)
         if master_diff and master_diff_path:
             write_json(master_diff_path, master_diff)
+        if change_events and change_events_path:
+            write_json(change_events_path, change_events)
         if update_latest:
             pointer = self.latest_pointer_path(source_id)
             pointer.parent.mkdir(parents=True, exist_ok=True)
@@ -178,8 +200,10 @@ class LocalRunStore:
             evaluation_path=str(evaluation_path),
             source_spec_path=str(source_spec_path),
             master_diff_path=str(master_diff_path) if master_diff_path else None,
+            change_events_path=str(change_events_path) if change_events_path else None,
             payload_paths=payload_paths,
             evaluation=evaluation,
+            change_event_count=len(change_events.events) if change_events else 0,
         )
 
 
@@ -242,6 +266,7 @@ def execute_local_run(
         )
 
     evaluation = evaluate_run(manifest, previous=previous_manifest, master_diff=master_diff)
+    change_events = build_change_event_bundle(actual_run_id, evaluation)
     result = store.save_run(
         actual_run_id,
         source_id,
@@ -249,5 +274,6 @@ def execute_local_run(
         manifest,
         evaluation,
         master_diff=master_diff,
+        change_events=change_events,
     )
     return replace(result, previous_run_id=previous_run_id)

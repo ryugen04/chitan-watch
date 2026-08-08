@@ -1,0 +1,5 @@
+{
+  "sources": {
+    "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/master_20260803.csv": "tests/fixtures/master_positional_diff_old.csv"
+  }
+}

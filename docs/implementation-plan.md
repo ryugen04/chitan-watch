@@ -146,3 +146,15 @@ Implemented the local crawler run store:
 - covered first run, second run with `previous=latest`, explicit previous run id, overwrite refusal, and CLI smoke
 
 Next increment should add the live-edge command that discovers official seed-page artifacts, fetches selected payloads into the local store, and uses the same run-local persistence/evaluation path.
+
+
+## ORD-012 completed increment
+
+Implemented the first local product slice:
+
+- added fixture-testable `run-official-local` for seed discovery -> artifact spec -> local run store execution
+- added deterministic ChangeEvent candidate generation and persisted `change-events.json`
+- added a standard-library read-only API for runs, changes, source health, and static web assets
+- connected `apps/web` to API data with fixture fallback
+
+Next increment should add notification v1, starting with RSS over the same ChangeEvent JSON before Slack/email delivery.

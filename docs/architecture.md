@@ -74,3 +74,18 @@ storage/chitan-watch/
 ```
 
 This is a development and small-ops boundary, not the long-term production database. It deliberately mirrors the future object-storage/database split: payload bytes live under `payloads/`, deterministic metadata lives in JSON, and `latest.txt` is only a pointer for local previous-run lookup.
+
+
+## Product slice API/UI boundary
+
+The local product slice now runs as one Python process for development:
+
+```text
+run-official-local
+  -> LocalRunStore
+  -> change-events.json
+  -> chitan_watch.api
+  -> apps/web
+```
+
+The API is deliberately read-only and file-backed in this phase. It exposes `/api/runs`, `/api/runs/<id>`, `/api/changes`, `/api/changes/<id>`, `/api/source-health`, and static Web assets. This keeps the UI contract close to the future hosted API while avoiding database and auth work until the deterministic pipeline is proven.

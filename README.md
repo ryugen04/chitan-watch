@@ -184,3 +184,30 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli run-local \
 ```
 
 `run-local` copies source payloads into `runs/<run_id>/payloads/`, writes `source-spec.json`, `manifest.json`, `evaluation.json`, optional `master-diff.json`, and updates `sources/<source_id>/latest.txt`. The default store path is under `storage/`, which is ignored by Git.
+
+
+## Product Slice: Live Local Crawl, API, Web
+
+Run a fixture-backed official crawl into local storage:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli run-official-local \
+  https://www.ssk.or.jp/seikyushiharai/titansys/index.html \
+  --store-dir storage/chitan-watch \
+  --artifact-type master_csv \
+  --previous latest \
+  --allow-candidate-mapping
+```
+
+For live official use, omit `--seed-html-file` and `--source-map-file`; fetched payloads are copied under ignored `storage/chitan-watch/runs/<run_id>/payloads/`.
+
+Serve the local API and Web UI together:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli serve \
+  --store-dir storage/chitan-watch \
+  --web-dir apps/web \
+  --port 8765
+```
+
+Then open `http://127.0.0.1:8765`. The Web UI reads `/api/runs`, `/api/changes`, and `/api/source-health`; if the API is unavailable, it falls back to fixture data.

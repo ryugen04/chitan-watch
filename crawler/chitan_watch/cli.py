@@ -9,8 +9,10 @@ from .csv_analysis import analyze_csv_source
 from .diff import diff_master_records
 from .discovery import discover_seed_url
 from .models import ArtifactType
+from .api import main as api_main
 from .identity import validate_record_identities
 from .events import build_change_bundle
+from .live_crawl import DEFAULT_ALLOWED_DOMAINS, DEFAULT_ARTIFACT_TYPES, execute_live_local_run
 from .local_store import DEFAULT_STORE_DIR, execute_local_run
 from .master_diff import diff_master_snapshots
 from .master_snapshot import build_master_snapshot
@@ -103,6 +105,29 @@ def main() -> int:
     run_local_cmd.add_argument("--schema", default=None)
     run_local_cmd.add_argument("--allow-candidate-mapping", action="store_true")
     run_local_cmd.add_argument("--overwrite", action="store_true")
+
+    run_official_cmd = sub.add_parser("run-official-local", help="Discover official artifacts and execute a local crawler run")
+    run_official_cmd.add_argument("seed_url")
+    run_official_cmd.add_argument("--store-dir", default=str(DEFAULT_STORE_DIR))
+    run_official_cmd.add_argument("--source-id", default="ssk-chitan")
+    run_official_cmd.add_argument("--allowed-domain", action="append", dest="allowed_domains")
+    run_official_cmd.add_argument("--artifact-type", action="append", dest="artifact_types", choices=[item.value for item in ArtifactType])
+    run_official_cmd.add_argument("--seed-html-file", default=None)
+    run_official_cmd.add_argument("--source-map-file", default=None)
+    run_official_cmd.add_argument("--run-id", default=None)
+    run_official_cmd.add_argument("--generated-at", default=None)
+    run_official_cmd.add_argument("--previous", default="latest")
+    run_official_cmd.add_argument("--master-artifact-id", default=None)
+    run_official_cmd.add_argument("--schema", default=None)
+    run_official_cmd.add_argument("--allow-candidate-mapping", action="store_true")
+    run_official_cmd.add_argument("--overwrite", action="store_true")
+    run_official_cmd.add_argument("--limit", type=int, default=None)
+
+    serve_cmd = sub.add_parser("serve", help="Serve the local API and web UI")
+    serve_cmd.add_argument("--store-dir", default=str(DEFAULT_STORE_DIR))
+    serve_cmd.add_argument("--web-dir", default="apps/web")
+    serve_cmd.add_argument("--host", default="127.0.0.1")
+    serve_cmd.add_argument("--port", type=int, default=8765)
 
     args = parser.parse_args()
 
@@ -237,6 +262,35 @@ def main() -> int:
         )
         print(json.dumps(result, default=encode, ensure_ascii=False, indent=2))
         return 0
+
+    if args.command == "run-official-local":
+        allowed_domains = tuple(args.allowed_domains or DEFAULT_ALLOWED_DOMAINS)
+        artifact_types = tuple(ArtifactType(value) for value in (args.artifact_types or ())) or DEFAULT_ARTIFACT_TYPES
+        result = execute_live_local_run(
+            args.seed_url,
+            store_dir=args.store_dir,
+            source_id=args.source_id,
+            allowed_domains=allowed_domains,
+            artifact_types=artifact_types,
+            seed_html_file=args.seed_html_file,
+            source_map_file=args.source_map_file,
+            run_id=args.run_id,
+            generated_at=args.generated_at,
+            previous=args.previous,
+            master_artifact_id=args.master_artifact_id,
+            schema_path=args.schema or DEFAULT_SCHEMA_PATH,
+            allow_candidate_mapping=args.allow_candidate_mapping,
+            overwrite=args.overwrite,
+            limit=args.limit,
+        )
+        print(json.dumps(result, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "serve":
+        import sys
+
+        sys.argv = ["chitan-watch-api", "--store-dir", args.store_dir, "--web-dir", args.web_dir, "--host", args.host, "--port", str(args.port)]
+        return api_main()
 
     return 2
 
