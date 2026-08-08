@@ -121,3 +121,16 @@ Implemented positional master snapshot diffing:
 - exposes `snapshot-master` and `diff-master` CLI commands
 
 Next increment should connect discovery + snapshot metadata + positional diff into a run-level crawler state machine that can compare the latest official artifact against the previous stored snapshot.
+
+
+## ORD-010 completed increment
+
+Implemented deterministic crawler run evaluation:
+
+- builds snapshot manifests from local artifact source specs
+- compares previous/current manifests and classifies artifact states
+- derives CrawlerRun status across no-change, changed, partial failure, total failure, and schema break cases
+- attaches positional master semantic diff separately from artifact SHA comparison
+- exposes `build-manifest` and `evaluate-run` CLI commands
+
+Next increment should add a storage adapter boundary for previous/current manifests and a single command that discovers official artifacts, writes payloads to object storage, and evaluates against the latest stored run.

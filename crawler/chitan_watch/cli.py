@@ -16,6 +16,7 @@ from .master_snapshot import build_master_snapshot
 from .parser import parse_master_csv_file
 from .positional_master import DEFAULT_SCHEMA_PATH, parse_positional_csv_source, summarize_parse
 from .pdf_items import extract_pdf_text, parse_item_candidates
+from .run_state import build_manifest_from_specs, build_master_diff_attachment, evaluate_run, load_manifest, load_specs
 from .snapshot import fetch_snapshot
 from .xlsx_analysis import analyze_xlsx_source
 
@@ -76,6 +77,19 @@ def main() -> int:
     diff_master_cmd.add_argument("new_source")
     diff_master_cmd.add_argument("--schema", default=None)
     diff_master_cmd.add_argument("--allow-candidate-mapping", action="store_true")
+
+    build_manifest_cmd = sub.add_parser("build-manifest", help="Build a deterministic snapshot manifest from a local artifact spec JSON")
+    build_manifest_cmd.add_argument("spec_json")
+    build_manifest_cmd.add_argument("--source-id", default="ssk-chitan")
+    build_manifest_cmd.add_argument("--generated-at", default=None)
+
+    evaluate_run_cmd = sub.add_parser("evaluate-run", help="Evaluate current crawler manifest against an optional previous manifest")
+    evaluate_run_cmd.add_argument("current_manifest")
+    evaluate_run_cmd.add_argument("--previous-manifest", default=None)
+    evaluate_run_cmd.add_argument("--master-old-source", default=None)
+    evaluate_run_cmd.add_argument("--master-new-source", default=None)
+    evaluate_run_cmd.add_argument("--schema", default=None)
+    evaluate_run_cmd.add_argument("--allow-candidate-mapping", action="store_true")
 
     args = parser.parse_args()
 
@@ -171,6 +185,28 @@ def main() -> int:
         new_snapshot = build_master_snapshot(args.new_source, new_schema, new_records)
         diff = diff_master_snapshots(old_snapshot.rows, new_snapshot.rows)
         print(json.dumps(diff, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "build-manifest":
+        manifest = build_manifest_from_specs(args.source_id, load_specs(args.spec_json), generated_at=args.generated_at)
+        print(json.dumps(manifest, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "evaluate-run":
+        current = load_manifest(args.current_manifest)
+        previous = load_manifest(args.previous_manifest) if args.previous_manifest else None
+        master_diff = None
+        if args.master_old_source or args.master_new_source:
+            if not args.master_old_source or not args.master_new_source:
+                parser.error("evaluate-run requires both --master-old-source and --master-new-source when attaching master diff")
+            master_diff = build_master_diff_attachment(
+                args.master_old_source,
+                args.master_new_source,
+                schema_path=args.schema or DEFAULT_SCHEMA_PATH,
+                allow_candidate_mapping=args.allow_candidate_mapping,
+            )
+        run = evaluate_run(current, previous=previous, master_diff=master_diff)
+        print(json.dumps(run, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2

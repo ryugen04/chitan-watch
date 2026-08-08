@@ -1,0 +1,11 @@
+{
+  "artifacts": [
+    {
+      "id": "art_master_csv",
+      "type": "master_csv",
+      "title": "fixture master csv",
+      "canonical_url": "https://www.ssk.or.jp/fixture/master.csv",
+      "path": "tests/fixtures/artifact_note_old.txt"
+    }
+  ]
+}

@@ -40,3 +40,19 @@ CrawlerRun states must distinguish:
 - `SCHEMA_BREAK`
 
 Silent monitoring failure is a product bug.
+
+
+## Implemented deterministic run layer
+
+The current crawler foundation has a JSON manifest boundary:
+
+```text
+ArtifactSourceSpec
+  -> SnapshotManifest
+  -> CrawlerRunEvaluation
+  -> optional MasterDiffAttachment
+```
+
+`SnapshotManifest` is intentionally storage-neutral. It can be produced from local fixture sources today and later from object storage/database records without changing the artifact comparison rules. `CrawlerRunEvaluation` compares previous/current manifests, classifies artifact states as `added`, `removed`, `changed`, `unchanged`, or `failed`, then derives the visible CrawlerRun status.
+
+Master CSV semantic diff is attached separately through `MasterDiffAttachment`, so a raw artifact SHA change is not confused with a confirmed row-level制度 change.

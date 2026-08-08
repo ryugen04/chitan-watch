@@ -144,3 +144,26 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli diff-master \
 ```
 
 The diff first matches exact row hashes inside each business identity group. If one old and one new unmatched row remain, it emits a field-level `row_modified` change. If multiple old and new unmatched rows remain, it emits `row_ambiguous` for Admin Review instead of guessing.
+
+
+## Crawler Run Evaluation
+
+Build a deterministic artifact snapshot manifest from a local spec JSON:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli build-manifest \
+  tests/fixtures/manifest_spec_old.json \
+  --generated-at 2026-08-09T00:00:00+00:00
+```
+
+Evaluate a current manifest against a previous manifest, optionally attaching positional master semantic diff output:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli evaluate-run current.json \
+  --previous-manifest previous.json \
+  --master-old-source tests/fixtures/master_positional_diff_old.csv \
+  --master-new-source tests/fixtures/master_positional_diff_new.csv \
+  --allow-candidate-mapping
+```
+
+Run evaluation distinguishes artifact metadata changes from parsed master row changes, and reports `SUCCESS_NO_CHANGE`, `SUCCESS_CHANGED`, `PARTIAL_FAILURE`, `FAILED`, or `SCHEMA_BREAK`.
