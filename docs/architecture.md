@@ -89,3 +89,14 @@ run-official-local
 ```
 
 The API is deliberately read-only and file-backed in this phase. It exposes `/api/runs`, `/api/runs/<id>`, `/api/changes`, `/api/changes/<id>`, `/api/source-health`, and static Web assets. This keeps the UI contract close to the future hosted API while avoiding database and auth work until the deterministic pipeline is proven.
+
+
+## RSS delivery boundary
+
+RSS v1 is generated directly from stored `change-events.json` files:
+
+```text
+LocalRunStore -> ChangeEvent JSON -> RSS 2.0 XML -> /rss.xml
+```
+
+This is the first notification surface because it is pull-based, stateless, and easy for external apps to subscribe to. Slack and email can reuse the same ChangeEvent feed ordering and item summaries later.

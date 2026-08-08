@@ -158,3 +158,15 @@ Implemented the first local product slice:
 - connected `apps/web` to API data with fixture fallback
 
 Next increment should add notification v1, starting with RSS over the same ChangeEvent JSON before Slack/email delivery.
+
+
+## ORD-013 completed increment
+
+Implemented RSS subscription support:
+
+- added dependency-free RSS 2.0 serialization from stored ChangeEvents
+- exposed `/rss.xml` and `/feeds/changes.xml` with `application/rss+xml`
+- added `chitan_watch.cli rss` for feed XML output
+- added Web RSS auto-discovery and a visible RSS link
+
+Next increment should add Slack webhook delivery using the same ChangeEvent ordering and summaries.

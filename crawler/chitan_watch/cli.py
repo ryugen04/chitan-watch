@@ -19,6 +19,7 @@ from .master_snapshot import build_master_snapshot
 from .parser import parse_master_csv_file
 from .positional_master import DEFAULT_SCHEMA_PATH, parse_positional_csv_source, summarize_parse
 from .pdf_items import extract_pdf_text, parse_item_candidates
+from .rss import RssFeedOptions, rss_xml_from_store_path
 from .run_state import build_manifest_from_specs, build_master_diff_attachment, evaluate_run, load_manifest, load_specs
 from .snapshot import fetch_snapshot
 from .xlsx_analysis import analyze_xlsx_source
@@ -128,6 +129,14 @@ def main() -> int:
     serve_cmd.add_argument("--web-dir", default="apps/web")
     serve_cmd.add_argument("--host", default="127.0.0.1")
     serve_cmd.add_argument("--port", type=int, default=8765)
+    serve_cmd.add_argument("--site-url", default=None)
+
+    rss_cmd = sub.add_parser("rss", help="Emit RSS 2.0 XML for stored ChangeEvents")
+    rss_cmd.add_argument("--store-dir", default=str(DEFAULT_STORE_DIR))
+    rss_cmd.add_argument("--site-url", default="http://127.0.0.1:8765")
+    rss_cmd.add_argument("--title", default="Chitan Watch Changes")
+    rss_cmd.add_argument("--description", default="地単公費マスターの検知済み変更イベント")
+    rss_cmd.add_argument("--max-items", type=int, default=50)
 
     args = parser.parse_args()
 
@@ -290,7 +299,17 @@ def main() -> int:
         import sys
 
         sys.argv = ["chitan-watch-api", "--store-dir", args.store_dir, "--web-dir", args.web_dir, "--host", args.host, "--port", str(args.port)]
+        if args.site_url:
+            sys.argv.extend(["--site-url", args.site_url])
         return api_main()
+
+    if args.command == "rss":
+        xml = rss_xml_from_store_path(
+            args.store_dir,
+            options=RssFeedOptions(title=args.title, description=args.description, site_url=args.site_url, max_items=args.max_items),
+        )
+        print(xml, end="")
+        return 0
 
     return 2
 

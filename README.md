@@ -211,3 +211,22 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli serve \
 ```
 
 Then open `http://127.0.0.1:8765`. The Web UI reads `/api/runs`, `/api/changes`, and `/api/source-health`; if the API is unavailable, it falls back to fixture data.
+
+
+## RSS Subscription
+
+When the local server is running, RSS readers can subscribe to:
+
+```text
+http://127.0.0.1:8765/rss.xml
+```
+
+The same feed is also available at `/feeds/changes.xml`. To emit the feed XML from the CLI:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli rss \
+  --store-dir storage/chitan-watch \
+  --site-url http://127.0.0.1:8765
+```
+
+The Web UI advertises the feed with an RSS auto-discovery link, so normal feed readers can detect it from the site URL.

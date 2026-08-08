@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 from .local_store import DEFAULT_STORE_DIR, LocalRunStore
+from .rss import RssFeedOptions, rss_xml_from_store
 
 DEFAULT_WEB_DIR = Path(__file__).resolve().parents[2] / "apps" / "web"
 
@@ -29,6 +30,10 @@ def to_jsonable(value):
 
 def json_response(value, status: int = 200) -> tuple[int, bytes, str]:
     return status, (json.dumps(to_jsonable(value), ensure_ascii=False, indent=2) + "\n").encode("utf-8"), "application/json; charset=utf-8"
+
+
+def rss_response(xml: str, status: int = 200) -> tuple[int, bytes, str]:
+    return status, xml.encode("utf-8"), "application/rss+xml; charset=utf-8"
 
 
 def _sorted_run_ids(store: LocalRunStore) -> tuple[str, ...]:
@@ -68,7 +73,9 @@ def _run_summary(store: LocalRunStore, run_id: str) -> dict:
     }
 
 
-def build_api_payload(path: str, store: LocalRunStore) -> tuple[int, bytes, str] | None:
+def build_api_payload(path: str, store: LocalRunStore, site_url: str = "http://127.0.0.1:8765") -> tuple[int, bytes, str] | None:
+    if path in {"/rss.xml", "/feeds/changes.xml"}:
+        return rss_response(rss_xml_from_store(store, options=RssFeedOptions(site_url=site_url)))
     if path == "/api/health":
         return json_response({"ok": True, "store_dir": str(store.root), "run_count": len(store.list_run_ids())})
     if path == "/api/runs":
@@ -121,11 +128,12 @@ def build_api_payload(path: str, store: LocalRunStore) -> tuple[int, bytes, str]
 class ChitanRequestHandler(SimpleHTTPRequestHandler):
     store = LocalRunStore(DEFAULT_STORE_DIR)
     web_dir = DEFAULT_WEB_DIR
+    site_url = "http://127.0.0.1:8765"
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
-        if parsed.path.startswith("/api/"):
-            payload = build_api_payload(parsed.path, self.store)
+        if parsed.path.startswith("/api/") or parsed.path in {"/rss.xml", "/feeds/changes.xml"}:
+            payload = build_api_payload(parsed.path, self.store, site_url=self.site_url)
             if payload is None:
                 payload = json_response({"error": "not found"}, status=404)
             status, body, content_type = payload
@@ -155,13 +163,15 @@ class ChitanRequestHandler(SimpleHTTPRequestHandler):
         return
 
 
-def make_server(host: str, port: int, store_dir: str | Path = DEFAULT_STORE_DIR, web_dir: str | Path = DEFAULT_WEB_DIR) -> ThreadingHTTPServer:
+def make_server(host: str, port: int, store_dir: str | Path = DEFAULT_STORE_DIR, web_dir: str | Path = DEFAULT_WEB_DIR, site_url: str | None = None) -> ThreadingHTTPServer:
     selected_store = LocalRunStore(store_dir)
     selected_web_dir = Path(web_dir)
+    selected_site_url = site_url or f"http://{host}:{port}"
 
     class Handler(ChitanRequestHandler):
         store = selected_store
         web_dir = selected_web_dir
+        site_url = selected_site_url
 
     return ThreadingHTTPServer((host, port), Handler)
 
@@ -172,8 +182,9 @@ def main() -> int:
     parser.add_argument("--web-dir", default=str(DEFAULT_WEB_DIR))
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--site-url", default=None)
     args = parser.parse_args()
-    server = make_server(args.host, args.port, store_dir=args.store_dir, web_dir=args.web_dir)
+    server = make_server(args.host, args.port, store_dir=args.store_dir, web_dir=args.web_dir, site_url=args.site_url)
     print(f"Chitan Watch API listening on http://{args.host}:{args.port}")
     try:
         server.serve_forever()
