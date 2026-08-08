@@ -1,18 +1,70 @@
+# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .venv/
-.env
-.env.*
+venv/
+
+# Node / frontend
 node_modules/
 .next/
 dist/
 build/
 coverage/
-.DS_Store
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.secrets
+secrets/
+credentials/
+credentials.*
+*.token
+*.key
+*.pem
+*.p8
+*.p12
+*.pfx
+*.crt
+*.csr
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+
+# Local databases and state
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.duckdb
+*.parquet
+*.log
+logs/
+tmp/
+temp/
+
+# Chitan Watch runtime/generated outputs
 storage/
 artifacts/
-*.sqlite
 public/
+exports/
+downloads/
+payloads/
+reports/generated/
+*.rss.xml
+rss.xml
+feeds/changes.xml
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
