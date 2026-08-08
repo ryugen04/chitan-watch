@@ -83,3 +83,15 @@ Implemented item-list PDF extraction:
 - marks the mapping as `manual_review_required` because PDF candidates (95) and CSV columns (94) do not match
 
 Next increment should reconcile this mismatch by inspecting CSV tail positions and, if practical, the official Excel master structure.
+
+
+## ORD-006 completed increment
+
+Implemented XLSX structure analysis and reconciliation evidence:
+
+- reads workbook/sheet XML from XLSX ZIP payloads with the Python standard library
+- reports sheet dimensions, first rows, tail cells, and workbook SHA-256
+- confirmed the official Excel workbook has 47 sheets and 95 logical item candidates in header rows
+- reconciled the CSV's 94-column shape by creating `csv_fields` that exclude new item `79`
+
+Next increment should build a gated parser that can map the 94-column CSV rows using `csv_fields`, while refusing production mode until review clears the mapping status.

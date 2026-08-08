@@ -86,3 +86,29 @@ Likely reconciliation work:
 - inspect sample rows by position, especially the tail columns around new item numbers 78-91
 - verify whether PDF text extraction split or merged any visually grouped item row
 - cross-check with the Excel master file if allowed, because PDF layout may obscure true column positions
+
+
+## Excel reconciliation
+
+`ORD-006` inspected the official Excel master workbook structure without committing the workbook payload:
+
+- Source Excel: https://www.ssk.or.jp/seikyushiharai/titansys/index.files/20260803_kakutei_chitan.xlsx
+- Excel SHA-256: `26529eed5f088cccf206b4e3b53f5345cc1c790f70fcf6c9d63564cd8327bf99`
+- Workbook sheets: 47, apparently one sheet per prefecture code
+- Example sheet dimension: `A1:DV6176`
+- Header row logical item candidates: 95
+- Last logical item candidate: column `CQ`, new item `79`, `その他制度に係る参考情報`
+- Live CSV columns: 94
+
+Reconciliation finding:
+
+The Excel/PDF item list includes 95 logical item candidates, but the CSV export contains 94 columns. The strongest current explanation is that CSV positions 1-94 correspond to Excel/PDF candidates through new item `78` (`公費適用優先順位`), and new item `79` (`その他制度に係る参考情報`) is workbook-only / excluded from CSV export.
+
+The positional schema now records:
+
+- `fields`: all 95 PDF/Excel candidates
+- `csv_fields`: 94-column CSV mapping candidate
+- `excluded_from_csv_candidates`: new item `79`
+- `mapping_status`: `csv_mapping_candidate_requires_review`
+
+This is now strong enough to start a gated parser prototype, but still requires manual review before production use.

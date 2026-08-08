@@ -13,6 +13,7 @@ from .events import build_change_bundle
 from .parser import parse_master_csv_file
 from .pdf_items import extract_pdf_text, parse_item_candidates
 from .snapshot import fetch_snapshot
+from .xlsx_analysis import analyze_xlsx_source
 
 
 def encode(value):
@@ -45,6 +46,9 @@ def main() -> int:
 
     pdf_items_cmd = sub.add_parser("extract-pdf-items", help="Extract item-list candidates from a local PDF using pdftotext")
     pdf_items_cmd.add_argument("pdf_path")
+
+    xlsx_cmd = sub.add_parser("analyze-xlsx", help="Analyze XLSX workbook structure from a URL or local file without storing payload")
+    xlsx_cmd.add_argument("source")
 
     args = parser.parse_args()
 
@@ -84,6 +88,11 @@ def main() -> int:
         text = extract_pdf_text(args.pdf_path)
         extraction = parse_item_candidates(text, source_pdf=args.pdf_path)
         print(json.dumps(extraction, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "analyze-xlsx":
+        analysis = analyze_xlsx_source(args.source)
+        print(json.dumps(analysis, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2

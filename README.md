@@ -94,3 +94,14 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli extract-pdf-items /tmp/chitan-sir
 ```
 
 The current extraction produces 95 item candidates, while the live CSV has 94 columns. The positional schema is therefore marked `manual_review_required` until the mismatch is reconciled.
+
+
+## XLSX Structure Analysis
+
+Analyze the official Excel master workbook without committing the payload:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli analyze-xlsx /tmp/chitan-20260803_kakutei_chitan.xlsx
+```
+
+The current workbook has 47 prefecture sheets. Header rows expose 95 logical item candidates, while CSV has 94 columns; evidence indicates CSV likely excludes new item `79` (`その他制度に係る参考情報`).
