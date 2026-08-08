@@ -56,3 +56,21 @@ ArtifactSourceSpec
 `SnapshotManifest` is intentionally storage-neutral. It can be produced from local fixture sources today and later from object storage/database records without changing the artifact comparison rules. `CrawlerRunEvaluation` compares previous/current manifests, classifies artifact states as `added`, `removed`, `changed`, `unchanged`, or `failed`, then derives the visible CrawlerRun status.
 
 Master CSV semantic diff is attached separately through `MasterDiffAttachment`, so a raw artifact SHA change is not confused with a confirmed row-level制度 change.
+
+
+## Local storage adapter
+
+The local operational adapter writes this ignored layout by default:
+
+```text
+storage/chitan-watch/
+  runs/<run_id>/
+    source-spec.json
+    payloads/<artifact_id>.<ext>
+    manifest.json
+    evaluation.json
+    master-diff.json
+  sources/<source_id>/latest.txt
+```
+
+This is a development and small-ops boundary, not the long-term production database. It deliberately mirrors the future object-storage/database split: payload bytes live under `payloads/`, deterministic metadata lives in JSON, and `latest.txt` is only a pointer for local previous-run lookup.

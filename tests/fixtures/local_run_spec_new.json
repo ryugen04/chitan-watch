@@ -1,0 +1,18 @@
+{
+  "artifacts": [
+    {
+      "id": "art_master_csv",
+      "type": "master_csv",
+      "title": "fixture positional master csv",
+      "canonical_url": "https://www.ssk.or.jp/fixture/master.csv",
+      "path": "tests/fixtures/master_positional_diff_new.csv"
+    },
+    {
+      "id": "art_note",
+      "type": "manual",
+      "title": "fixture note",
+      "canonical_url": "https://www.ssk.or.jp/fixture/note.txt",
+      "path": "tests/fixtures/artifact_note_new.txt"
+    }
+  ]
+}

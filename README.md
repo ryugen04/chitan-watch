@@ -167,3 +167,20 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli evaluate-run current.json \
 ```
 
 Run evaluation distinguishes artifact metadata changes from parsed master row changes, and reports `SUCCESS_NO_CHANGE`, `SUCCESS_CHANGED`, `PARTIAL_FAILURE`, `FAILED`, or `SCHEMA_BREAK`.
+
+
+## Local Crawler Run
+
+Execute a complete local run into an ignored run directory:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli run-local \
+  tests/fixtures/local_run_spec_old.json \
+  --store-dir storage/chitan-watch \
+  --run-id run-20260809T000000Z \
+  --previous latest \
+  --master-artifact-id art_master_csv \
+  --allow-candidate-mapping
+```
+
+`run-local` copies source payloads into `runs/<run_id>/payloads/`, writes `source-spec.json`, `manifest.json`, `evaluation.json`, optional `master-diff.json`, and updates `sources/<source_id>/latest.txt`. The default store path is under `storage/`, which is ignored by Git.

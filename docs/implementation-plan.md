@@ -134,3 +134,15 @@ Implemented deterministic crawler run evaluation:
 - exposes `build-manifest` and `evaluate-run` CLI commands
 
 Next increment should add a storage adapter boundary for previous/current manifests and a single command that discovers official artifacts, writes payloads to object storage, and evaluates against the latest stored run.
+
+
+## ORD-011 completed increment
+
+Implemented the local crawler run store:
+
+- added ignored local run directory persistence for specs, payload copies, manifests, evaluations, and optional master diff output
+- added latest-run pointer tracking per source
+- added `run-local` CLI to execute spec -> payload copy -> manifest -> previous lookup -> optional master diff -> evaluation -> persisted run
+- covered first run, second run with `previous=latest`, explicit previous run id, overwrite refusal, and CLI smoke
+
+Next increment should add the live-edge command that discovers official seed-page artifacts, fetches selected payloads into the local store, and uses the same run-local persistence/evaluation path.

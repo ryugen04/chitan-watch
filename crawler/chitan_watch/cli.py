@@ -11,6 +11,7 @@ from .discovery import discover_seed_url
 from .models import ArtifactType
 from .identity import validate_record_identities
 from .events import build_change_bundle
+from .local_store import DEFAULT_STORE_DIR, execute_local_run
 from .master_diff import diff_master_snapshots
 from .master_snapshot import build_master_snapshot
 from .parser import parse_master_csv_file
@@ -90,6 +91,18 @@ def main() -> int:
     evaluate_run_cmd.add_argument("--master-new-source", default=None)
     evaluate_run_cmd.add_argument("--schema", default=None)
     evaluate_run_cmd.add_argument("--allow-candidate-mapping", action="store_true")
+
+    run_local_cmd = sub.add_parser("run-local", help="Execute a local crawler run into an ignored run directory")
+    run_local_cmd.add_argument("spec_json")
+    run_local_cmd.add_argument("--store-dir", default=str(DEFAULT_STORE_DIR))
+    run_local_cmd.add_argument("--source-id", default="ssk-chitan")
+    run_local_cmd.add_argument("--run-id", default=None)
+    run_local_cmd.add_argument("--generated-at", default=None)
+    run_local_cmd.add_argument("--previous", default="latest", help="latest, none, or an explicit previous run id")
+    run_local_cmd.add_argument("--master-artifact-id", default=None)
+    run_local_cmd.add_argument("--schema", default=None)
+    run_local_cmd.add_argument("--allow-candidate-mapping", action="store_true")
+    run_local_cmd.add_argument("--overwrite", action="store_true")
 
     args = parser.parse_args()
 
@@ -207,6 +220,22 @@ def main() -> int:
             )
         run = evaluate_run(current, previous=previous, master_diff=master_diff)
         print(json.dumps(run, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "run-local":
+        result = execute_local_run(
+            load_specs(args.spec_json),
+            store_dir=args.store_dir,
+            source_id=args.source_id,
+            run_id=args.run_id,
+            generated_at=args.generated_at,
+            previous=args.previous,
+            master_artifact_id=args.master_artifact_id,
+            schema_path=args.schema or DEFAULT_SCHEMA_PATH,
+            allow_candidate_mapping=args.allow_candidate_mapping,
+            overwrite=args.overwrite,
+        )
+        print(json.dumps(result, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2
