@@ -122,3 +122,25 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli validate-identity   https://www.s
 ```
 
 Without `--allow-candidate-mapping`, parsing is intentionally blocked while the mapping status is `csv_mapping_candidate_requires_review`.
+
+
+## Positional Master Snapshot Diff
+
+Build deterministic row fingerprints for the gated 94-column master CSV:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli snapshot-master \
+  tests/fixtures/master_positional_diff_old.csv \
+  --allow-candidate-mapping
+```
+
+Diff two positional master CSV snapshots with business-identity grouping and row-hash safeguards:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli diff-master \
+  tests/fixtures/master_positional_diff_old.csv \
+  tests/fixtures/master_positional_diff_new.csv \
+  --allow-candidate-mapping
+```
+
+The diff first matches exact row hashes inside each business identity group. If one old and one new unmatched row remain, it emits a field-level `row_modified` change. If multiple old and new unmatched rows remain, it emits `row_ambiguous` for Admin Review instead of guessing.

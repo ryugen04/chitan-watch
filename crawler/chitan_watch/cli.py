@@ -11,6 +11,8 @@ from .discovery import discover_seed_url
 from .models import ArtifactType
 from .identity import validate_record_identities
 from .events import build_change_bundle
+from .master_diff import diff_master_snapshots
+from .master_snapshot import build_master_snapshot
 from .parser import parse_master_csv_file
 from .positional_master import DEFAULT_SCHEMA_PATH, parse_positional_csv_source, summarize_parse
 from .pdf_items import extract_pdf_text, parse_item_candidates
@@ -62,6 +64,18 @@ def main() -> int:
     identity_cmd.add_argument("source")
     identity_cmd.add_argument("--schema", default=None)
     identity_cmd.add_argument("--allow-candidate-mapping", action="store_true")
+
+    snapshot_master_cmd = sub.add_parser("snapshot-master", help="Emit normalized row fingerprints for a positional master CSV")
+    snapshot_master_cmd.add_argument("source")
+    snapshot_master_cmd.add_argument("--schema", default=None)
+    snapshot_master_cmd.add_argument("--allow-candidate-mapping", action="store_true")
+    snapshot_master_cmd.add_argument("--max-records", type=int, default=None)
+
+    diff_master_cmd = sub.add_parser("diff-master", help="Diff two positional master CSV snapshots with row fingerprint safeguards")
+    diff_master_cmd.add_argument("old_source")
+    diff_master_cmd.add_argument("new_source")
+    diff_master_cmd.add_argument("--schema", default=None)
+    diff_master_cmd.add_argument("--allow-candidate-mapping", action="store_true")
 
     args = parser.parse_args()
 
@@ -127,6 +141,36 @@ def main() -> int:
             allow_candidate_mapping=args.allow_candidate_mapping,
         )
         print(json.dumps(validate_record_identities(records), default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "snapshot-master":
+        schema_path = args.schema or None
+        schema, records = parse_positional_csv_source(
+            args.source,
+            schema_path=schema_path or DEFAULT_SCHEMA_PATH,
+            allow_candidate_mapping=args.allow_candidate_mapping,
+            max_records=args.max_records,
+        )
+        snapshot = build_master_snapshot(args.source, schema, records)
+        print(json.dumps(snapshot, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "diff-master":
+        schema_path = args.schema or None
+        old_schema, old_records = parse_positional_csv_source(
+            args.old_source,
+            schema_path=schema_path or DEFAULT_SCHEMA_PATH,
+            allow_candidate_mapping=args.allow_candidate_mapping,
+        )
+        new_schema, new_records = parse_positional_csv_source(
+            args.new_source,
+            schema_path=schema_path or DEFAULT_SCHEMA_PATH,
+            allow_candidate_mapping=args.allow_candidate_mapping,
+        )
+        old_snapshot = build_master_snapshot(args.old_source, old_schema, old_records)
+        new_snapshot = build_master_snapshot(args.new_source, new_schema, new_records)
+        diff = diff_master_snapshots(old_snapshot.rows, new_snapshot.rows)
+        print(json.dumps(diff, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2

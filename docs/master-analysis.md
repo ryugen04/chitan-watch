@@ -22,13 +22,13 @@ Before broad parser implementation, inspect the latest official CSV and item lis
 
 ## Identity policy
 
-Primary candidate:
+Primary business grouping candidate:
 
 ```text
 prefecture_code + municipality_code + public_funding_number + program_subdivision_code
 ```
 
-If this is duplicated in either old or new snapshot, the diff result is `AMBIGUOUS` and must route to Admin Review. LLM must not choose the matching row.
+Live validation showed this is not unique at row level. The positional diff therefore treats it as a business identity group, then uses deterministic full-row hashes to match unchanged rows inside the group. If exactly one unmatched old row and one unmatched new row remain, the diff emits a field-level modification. If multiple old and new unmatched rows remain, the diff emits `row_ambiguous` and routes the group to Admin Review. LLM must not choose among ambiguous row matches.
 
 ## Schema break policy
 
@@ -139,3 +139,15 @@ Findings:
 - Adding validity dates or program name reduces but does not eliminate duplicates.
 - Full rows are unique, so duplicate groups represent multiple distinct rule/condition rows under the same business grouping, not duplicate records.
 - Record matching must model a business identity group plus row-level condition identity/fingerprint. Ambiguous matching must remain review-gated.
+
+
+## Row fingerprint diff policy
+
+The current row fingerprint algorithm is `chitan-watch-positional-row-v1`:
+
+- `row_hash` hashes all 94 mapped CSV item values with the positional schema version.
+- `condition_fingerprint` hashes non-identity item values and records that identity items `3`, `4`, `8`, and `9` were excluded.
+- `snapshot-master` emits row fingerprints, business identity counts, and duplicate business identity summaries.
+- `diff-master` compares two positional snapshots using exact row hashes first, then conservative singleton modification matching.
+
+This makes row-level comparison useful before production mapping approval while preserving the explicit `--allow-candidate-mapping` gate.

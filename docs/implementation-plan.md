@@ -107,3 +107,17 @@ Implemented the gated parser and identity validation:
 - identity validator compares multiple profiles and reports duplicate groups, blank identity parts, and full-row uniqueness
 
 Next increment should implement row-level condition fingerprints and semantic diff matching that groups by business identity while refusing ambiguous row matches.
+
+
+## ORD-009 completed increment
+
+Implemented positional master snapshot diffing:
+
+- normalizes positional master rows into deterministic row hashes and condition fingerprints
+- treats the 4-part candidate identity as a business grouping key, not a unique row key
+- matches exact row hashes before comparing unmatched rows
+- emits singleton field-level modifications when one old and one new unmatched row remain in a business group
+- emits `row_ambiguous` for many-to-many unmatched groups instead of guessing
+- exposes `snapshot-master` and `diff-master` CLI commands
+
+Next increment should connect discovery + snapshot metadata + positional diff into a run-level crawler state machine that can compare the latest official artifact against the previous stored snapshot.
