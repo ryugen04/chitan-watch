@@ -83,3 +83,14 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli analyze-csv   https://www.ssk.or.
 ```
 
 The current live CSV is headerless, so production parsing must map columns from the official item-list document before semantic diffing.
+
+
+## Item List PDF Extraction
+
+Extract item candidates from the official item-list PDF without committing the PDF payload:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli extract-pdf-items /tmp/chitan-siryo2_20260330.pdf
+```
+
+The current extraction produces 95 item candidates, while the live CSV has 94 columns. The positional schema is therefore marked `manual_review_required` until the mismatch is reconciled.

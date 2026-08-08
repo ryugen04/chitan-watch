@@ -1,0 +1,773 @@
+{
+  "version": "2026-03-30",
+  "source_pdf_url": "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/siryo2_20260330.pdf",
+  "source_pdf_sha256": "5cff5c0020ff089019108d15f73370efefc329bbc37b2cd4961f622becdee98c",
+  "csv_source_url": "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/m_regional_publicly_funded_all_20260803.csv",
+  "csv_sha256": "4f768cfe38af951701aba24f79723333961ee2ed9db0a914c14dedec902399bf",
+  "csv_column_count": 94,
+  "pdf_candidate_count": 95,
+  "mapping_status": "manual_review_required",
+  "mapping_blocker": "PDF text extraction produced 95 item candidates while the live CSV has 94 columns; do not use as production parser mapping until reconciled.",
+  "fields": [
+    {
+      "candidate_position": 1,
+      "old_item_number": "1",
+      "new_item_number": "1",
+      "item_name": "事業名 正式名称",
+      "data_type": "日本語",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 2,
+      "old_item_number": "2",
+      "new_item_number": "2",
+      "item_name": "略称",
+      "data_type": "日本語",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 3,
+      "old_item_number": "3",
+      "new_item_number": "3",
+      "item_name": "都道府県番号",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 4,
+      "old_item_number": "4",
+      "new_item_number": "4",
+      "item_name": "市区町村コード",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 5,
+      "old_item_number": "5",
+      "new_item_number": "5",
+      "item_name": "分類番号 分類番号1",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 6,
+      "old_item_number": "6",
+      "new_item_number": "6",
+      "item_name": "分類番号2",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 7,
+      "old_item_number": "7",
+      "new_item_number": "7",
+      "item_name": "分類番号3",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 8,
+      "old_item_number": "8",
+      "new_item_number": "8",
+      "item_name": "公費負担者番号 8桁",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 9,
+      "old_item_number": "10",
+      "new_item_number": "9",
+      "item_name": "事業内区分コード",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 10,
+      "old_item_number": "11",
+      "new_item_number": "10",
+      "item_name": "助成内容有効期間 有効開始年月日",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 11,
+      "old_item_number": "12",
+      "new_item_number": "11",
+      "item_name": "有効終了年月日",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 12,
+      "old_item_number": "13",
+      "new_item_number": "12",
+      "item_name": "対象範囲(1) 対象者の年齢 年齢（以上） 年齢基準（以上）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 13,
+      "old_item_number": "14",
+      "new_item_number": "13",
+      "item_name": "対象年齢（以上）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 14,
+      "old_item_number": "15",
+      "new_item_number": "14",
+      "item_name": "年齢（未満） 年齢基準（未満）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 15,
+      "old_item_number": "16",
+      "new_item_number": "15",
+      "item_name": "対象年齢（未満）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 16,
+      "old_item_number": "17",
+      "new_item_number": "16",
+      "item_name": "入外区分 医科 入院",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 17,
+      "old_item_number": "18",
+      "new_item_number": "17",
+      "item_name": "外来",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 18,
+      "old_item_number": null,
+      "new_item_number": "18",
+      "item_name": "保険種別 社保",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 19,
+      "old_item_number": null,
+      "new_item_number": "19",
+      "item_name": "国保",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 20,
+      "old_item_number": null,
+      "new_item_number": "20",
+      "item_name": "後期高齢",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 21,
+      "old_item_number": "55",
+      "new_item_number": "21",
+      "item_name": "ひとり親等医療費助成対象者識別フラグ",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 22,
+      "old_item_number": "26",
+      "new_item_number": "22_1",
+      "item_name": "対象範囲(2) 経済状況 所得区分",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 23,
+      "old_item_number": null,
+      "new_item_number": "22_2",
+      "item_name": "所得区分名称（独自",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 24,
+      "old_item_number": null,
+      "new_item_number": "23_1",
+      "item_name": "患者の状態 高額かつ長期",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 25,
+      "old_item_number": null,
+      "new_item_number": "23_2",
+      "item_name": "重症患者認定",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 26,
+      "old_item_number": null,
+      "new_item_number": "23_3",
+      "item_name": "重度かつ継続",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 27,
+      "old_item_number": null,
+      "new_item_number": "23_4",
+      "item_name": "人工呼吸器等装着者",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 28,
+      "old_item_number": "29",
+      "new_item_number": "24",
+      "item_name": "就学状況",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 29,
+      "old_item_number": "30",
+      "new_item_number": "25",
+      "item_name": "多子世帯 設定",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 30,
+      "old_item_number": "31",
+      "new_item_number": "26",
+      "item_name": "子ども人数 以上",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 31,
+      "old_item_number": "32",
+      "new_item_number": "27",
+      "item_name": "人目",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 32,
+      "old_item_number": "33",
+      "new_item_number": "28",
+      "item_name": "対象範囲(2)複数選択フラグ",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 33,
+      "old_item_number": "34",
+      "new_item_number": "29",
+      "item_name": "対象範囲(2)AND条件となる項目の項番",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 34,
+      "old_item_number": "35",
+      "new_item_number": "30",
+      "item_name": "対象範囲(2)OR条件となる項目の項番",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 35,
+      "old_item_number": "36",
+      "new_item_number": "31",
+      "item_name": "助成方法",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 36,
+      "old_item_number": "40",
+      "new_item_number": "32",
+      "item_name": "助成条件又は自己負担 助成条件・自己 設定条件フラグ",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 37,
+      "old_item_number": "41",
+      "new_item_number": "33",
+      "item_name": "初診時のみ条件",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 38,
+      "old_item_number": "42",
+      "new_item_number": "34",
+      "item_name": "入院初回時のみ条件",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 39,
+      "old_item_number": null,
+      "new_item_number": "35",
+      "item_name": "連続入院条件 連続入院期間の条件",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 40,
+      "old_item_number": null,
+      "new_item_number": "36",
+      "item_name": "入院月数条件開始月",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 41,
+      "old_item_number": null,
+      "new_item_number": "37",
+      "item_name": "入院月数条件終了月",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 42,
+      "old_item_number": null,
+      "new_item_number": "38",
+      "item_name": "複数回受診条件 複数回受診条件回数（以上）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 43,
+      "old_item_number": null,
+      "new_item_number": "39",
+      "item_name": "複数回受診条件回数（以下）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 44,
+      "old_item_number": "47",
+      "new_item_number": "40",
+      "item_name": "保険制度変更前の患者負担額の累計",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 45,
+      "old_item_number": null,
+      "new_item_number": "87",
+      "item_name": "公費負担者番 助成有無",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 46,
+      "old_item_number": null,
+      "new_item_number": "88",
+      "item_name": "累計法別番号（1）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 47,
+      "old_item_number": null,
+      "new_item_number": "89",
+      "item_name": "累計法別番号（2）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 48,
+      "old_item_number": null,
+      "new_item_number": "90",
+      "item_name": "累計法別番号（3）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 49,
+      "old_item_number": null,
+      "new_item_number": "91",
+      "item_name": "累計法別番号（4）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 50,
+      "old_item_number": "48",
+      "new_item_number": "41",
+      "item_name": "助成・自己負担 助成・自己負担範囲詳細（入院）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 51,
+      "old_item_number": "49",
+      "new_item_number": "42",
+      "item_name": "助成・自己負担パターン 固定額（入院）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 52,
+      "old_item_number": "50",
+      "new_item_number": "43",
+      "item_name": "割合（入院）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 53,
+      "old_item_number": null,
+      "new_item_number": "44",
+      "item_name": "分数（入院）：分子",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 54,
+      "old_item_number": null,
+      "new_item_number": "45",
+      "item_name": "分数（入院）：分母",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 55,
+      "old_item_number": "51",
+      "new_item_number": "46",
+      "item_name": "助成・自己負担 助成・自己負担範囲詳細（外来）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 56,
+      "old_item_number": "52",
+      "new_item_number": "47",
+      "item_name": "助成・自己負担パターン 固定額（外来）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 57,
+      "old_item_number": "53",
+      "new_item_number": "48",
+      "item_name": "割合（外来）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 58,
+      "old_item_number": null,
+      "new_item_number": "49",
+      "item_name": "分数（外来）：分子",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 59,
+      "old_item_number": null,
+      "new_item_number": "50",
+      "item_name": "分数（外来）：分母",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 60,
+      "old_item_number": null,
+      "new_item_number": "51",
+      "item_name": "助成条件（入院時食 助成範囲（入院時食事療養費）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 61,
+      "old_item_number": null,
+      "new_item_number": "80",
+      "item_name": "入院時生活療養費識別フラグ",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 62,
+      "old_item_number": null,
+      "new_item_number": "52",
+      "item_name": "助成範囲（入院時生活療養費）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 63,
+      "old_item_number": null,
+      "new_item_number": "81",
+      "item_name": "助成範囲（入院時生活食事療養費）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 64,
+      "old_item_number": null,
+      "new_item_number": "82",
+      "item_name": "助成範囲（入院時生活環境療養費）",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 65,
+      "old_item_number": "54",
+      "new_item_number": "53",
+      "item_name": "上限額 上限額識別フラグ",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 66,
+      "old_item_number": "56",
+      "new_item_number": "54",
+      "item_name": "上限額入院外来合算フラグ",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 67,
+      "old_item_number": null,
+      "new_item_number": "55_1",
+      "item_name": "多数回該当上限額変動フラグ 入院",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 68,
+      "old_item_number": null,
+      "new_item_number": "55_2",
+      "item_name": "外来",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 69,
+      "old_item_number": null,
+      "new_item_number": "56_1",
+      "item_name": "端数条件 計算単位",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 70,
+      "old_item_number": null,
+      "new_item_number": "56_2",
+      "item_name": "計算方法",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 71,
+      "old_item_number": "59",
+      "new_item_number": "57",
+      "item_name": "上限額（療養の給付・入院分） 1日当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 72,
+      "old_item_number": null,
+      "new_item_number": "58",
+      "item_name": "入院日数条件開始日",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 73,
+      "old_item_number": null,
+      "new_item_number": "59",
+      "item_name": "入院日数条件終了日",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 74,
+      "old_item_number": "63",
+      "new_item_number": "61",
+      "item_name": "1月当たりの上限額 ※1",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 75,
+      "old_item_number": null,
+      "new_item_number": "62",
+      "item_name": "1月当たりの上限額（多数回該当）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 76,
+      "old_item_number": "65",
+      "new_item_number": "63",
+      "item_name": "上限額（療養の給付・外来分） 1回当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 77,
+      "old_item_number": "66",
+      "new_item_number": "64",
+      "item_name": "1回当たりの上限額の適用上限回数",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 78,
+      "old_item_number": "67",
+      "new_item_number": "65",
+      "item_name": "1日当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 79,
+      "old_item_number": "68",
+      "new_item_number": "66",
+      "item_name": "1日当たりの上限額の適用上限日数",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 80,
+      "old_item_number": "71",
+      "new_item_number": "68",
+      "item_name": "1月当たりの上限額 ※1",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 81,
+      "old_item_number": null,
+      "new_item_number": "69",
+      "item_name": "1月当たりの上限額（多数回該当）",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 82,
+      "old_item_number": "73",
+      "new_item_number": "70",
+      "item_name": "上限額（入院時食事療養費） 1日当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 83,
+      "old_item_number": "75",
+      "new_item_number": "71",
+      "item_name": "1月当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 84,
+      "old_item_number": "77",
+      "new_item_number": "72",
+      "item_name": "上限額（入院時生活療養費） 1日当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 85,
+      "old_item_number": "79",
+      "new_item_number": "73",
+      "item_name": "1月当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 86,
+      "old_item_number": null,
+      "new_item_number": "83",
+      "item_name": "上限額（入院時生活食事療養費） 1日当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 87,
+      "old_item_number": null,
+      "new_item_number": "84",
+      "item_name": "1月当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 88,
+      "old_item_number": null,
+      "new_item_number": "85",
+      "item_name": "上限額（入院時生活環境療養費） 1日当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 89,
+      "old_item_number": null,
+      "new_item_number": "86",
+      "item_name": "1月当たりの上限額",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 90,
+      "old_item_number": "81",
+      "new_item_number": "74",
+      "item_name": "他の公費負担医療の自 助成有無",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 91,
+      "old_item_number": "85",
+      "new_item_number": "75",
+      "item_name": "他事業の指定(1)",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 92,
+      "old_item_number": "86",
+      "new_item_number": "76",
+      "item_name": "他事業の指定(2)",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 93,
+      "old_item_number": "87",
+      "new_item_number": "77",
+      "item_name": "他事業の指定(3)",
+      "data_type": "文字列",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 94,
+      "old_item_number": "93",
+      "new_item_number": "78",
+      "item_name": "公費適用優先順位",
+      "data_type": "数字",
+      "mapping_status": "candidate_from_pdf_text"
+    },
+    {
+      "candidate_position": 95,
+      "old_item_number": "99",
+      "new_item_number": "79",
+      "item_name": "その他制度に係る参考情報",
+      "data_type": "日本語",
+      "mapping_status": "candidate_from_pdf_text"
+    }
+  ]
+}

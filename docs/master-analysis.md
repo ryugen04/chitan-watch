@@ -66,3 +66,23 @@ Implications:
 - The parser cannot rely on CSV headers.
 - `schemas/master/2026-03-30.yaml` must be generated from or reconciled with the official item-list PDF before semantic parsing.
 - Record identity fields are still unresolved because column positions and official item names must be mapped first.
+
+
+## Item-list PDF extraction
+
+`ORD-005` extracted the official item-list PDF text with Poppler `pdftotext`:
+
+- Source PDF: https://www.ssk.or.jp/seikyushiharai/titansys/index.files/siryo2_20260330.pdf
+- PDF SHA-256: `5cff5c0020ff089019108d15f73370efefc329bbc37b2cd4961f622becdee98c`
+- PDF metadata: Excel-origin PDF, A3, 6 pages
+- Extracted item candidates: 95
+- Live CSV columns: 94
+
+The repository now contains `schemas/master/2026-03-30.positional.json` as a candidate mapping artifact. It is intentionally marked `manual_review_required` because direct use would risk a one-column semantic shift.
+
+Likely reconciliation work:
+
+- confirm whether `その他制度に係る参考情報` is present in the CSV payload or only in the registration system item list
+- inspect sample rows by position, especially the tail columns around new item numbers 78-91
+- verify whether PDF text extraction split or merged any visually grouped item row
+- cross-check with the Excel master file if allowed, because PDF layout may obscure true column positions

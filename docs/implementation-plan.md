@@ -71,3 +71,15 @@ Implemented CSV structural analysis:
 - records live SSK CSV facts without committing the CSV payload
 
 Next increment should extract the official item-list PDF text/table and build the 94-column positional schema mapping.
+
+
+## ORD-005 completed increment
+
+Implemented item-list PDF extraction:
+
+- uses Poppler `pdftotext -layout`
+- parses line-level item candidates with old/new item numbers and data type
+- stores a candidate positional schema in `schemas/master/2026-03-30.positional.json`
+- marks the mapping as `manual_review_required` because PDF candidates (95) and CSV columns (94) do not match
+
+Next increment should reconcile this mismatch by inspecting CSV tail positions and, if practical, the official Excel master structure.

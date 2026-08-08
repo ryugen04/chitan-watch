@@ -11,6 +11,7 @@ from .discovery import discover_seed_url
 from .models import ArtifactType
 from .events import build_change_bundle
 from .parser import parse_master_csv_file
+from .pdf_items import extract_pdf_text, parse_item_candidates
 from .snapshot import fetch_snapshot
 
 
@@ -41,6 +42,9 @@ def main() -> int:
 
     analyze_cmd = sub.add_parser("analyze-csv", help="Analyze CSV structure from a URL or local file without storing payload")
     analyze_cmd.add_argument("source")
+
+    pdf_items_cmd = sub.add_parser("extract-pdf-items", help="Extract item-list candidates from a local PDF using pdftotext")
+    pdf_items_cmd.add_argument("pdf_path")
 
     args = parser.parse_args()
 
@@ -74,6 +78,12 @@ def main() -> int:
     if args.command == "analyze-csv":
         analysis = analyze_csv_source(args.source)
         print(json.dumps(analysis, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "extract-pdf-items":
+        text = extract_pdf_text(args.pdf_path)
+        extraction = parse_item_candidates(text, source_pdf=args.pdf_path)
+        print(json.dumps(extraction, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2
