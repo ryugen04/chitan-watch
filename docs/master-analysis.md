@@ -33,3 +33,17 @@ If this is duplicated in either old or new snapshot, the diff result is `AMBIGUO
 ## Schema break policy
 
 Missing required columns stop semantic diff and produce `SCHEMA_BREAK`. Additional columns are allowed during bootstrap but should be reviewed before production.
+
+
+## Live CSV snapshot metadata
+
+`ORD-003` probed the current SSK CSV artifact discovered from the seed page:
+
+- URL: https://www.ssk.or.jp/seikyushiharai/titansys/index.files/m_regional_publicly_funded_all_20260803.csv
+- HTTP status: 200
+- Content-Type: text/csv
+- Content-Length: 9,958,587 bytes
+- Last-Modified: Mon, 03 Aug 2026 01:35:44 GMT
+- SHA-256: 4f768cfe38af951701aba24f79723333961ee2ed9db0a914c14dedec902399bf
+
+The CSV bytes were not committed. Next parser work must inspect header/encoding/column semantics from an approved runtime artifact or object-storage snapshot.

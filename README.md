@@ -61,3 +61,14 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli discover   https://www.ssk.or.jp/
 ```
 
 The command fetches only seed HTML and emits JSON inventory. It does not download or commit official binary artifacts.
+
+
+## Snapshot Probe
+
+Fetch one selected artifact and emit deterministic Snapshot metadata without writing the payload to Git:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli snapshot   https://www.ssk.or.jp/seikyushiharai/titansys/index.files/m_regional_publicly_funded_all_20260803.csv   --artifact-id art_3f9a30bc52854e52
+```
+
+HTTP errors must be treated as failed snapshots, not as no-change results.

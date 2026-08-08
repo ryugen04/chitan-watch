@@ -45,3 +45,16 @@ Implemented deterministic source discovery:
 - avoid downloading official binaries during discovery
 
 Next increment should add snapshot metadata and SHA-256 retrieval for selected artifacts, still without storing official binary payloads in Git.
+
+
+## ORD-003 completed increment
+
+Implemented deterministic snapshot metadata probing:
+
+- fetch one artifact URL with explicit HTTP success handling
+- compute SHA-256 over retrieved bytes
+- populate Snapshot metadata without writing official payloads into Git
+- expose `chitan_watch.cli snapshot`
+- test SHA-256, content metadata, and HTTP failure handling
+
+Next increment should connect discovery output to snapshot probes for a full crawler run state, including `SUCCESS_NO_CHANGE`, `SUCCESS_CHANGED`, `FAILED`, and `PARTIAL_FAILURE` outcomes.

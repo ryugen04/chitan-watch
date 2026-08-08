@@ -10,6 +10,7 @@ from .discovery import discover_seed_url
 from .models import ArtifactType
 from .events import build_change_bundle
 from .parser import parse_master_csv_file
+from .snapshot import fetch_snapshot
 
 
 def encode(value):
@@ -33,6 +34,10 @@ def main() -> int:
     discover_cmd.add_argument("--allowed-domain", action="append", dest="allowed_domains")
     discover_cmd.add_argument("--artifact-type", action="append", dest="artifact_types", choices=[item.value for item in ArtifactType])
 
+    snapshot_cmd = sub.add_parser("snapshot", help="Fetch one artifact and emit deterministic Snapshot metadata")
+    snapshot_cmd.add_argument("url")
+    snapshot_cmd.add_argument("--artifact-id", required=True)
+
     args = parser.parse_args()
 
     if args.command == "diff":
@@ -55,6 +60,11 @@ def main() -> int:
         artifact_types = tuple(ArtifactType(value) for value in (args.artifact_types or ())) or None
         artifacts = discover_seed_url(args.seed_url, source_id=args.source_id, allowed_domains=allowed_domains, artifact_types=artifact_types)
         print(json.dumps({"seed_url": args.seed_url, "source_id": args.source_id, "artifacts": artifacts}, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "snapshot":
+        snapshot = fetch_snapshot(args.artifact_id, args.url)
+        print(json.dumps(snapshot, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2
