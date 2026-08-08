@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ChangeEvent",
+  "type": "object",
+  "required": ["id", "jurisdiction", "program", "detected_at", "severity", "evidence"],
+  "properties": {
+    "id": {"type": "string"},
+    "jurisdiction": {
+      "type": "object",
+      "required": ["prefecture_code"],
+      "properties": {
+        "prefecture_code": {"type": "string"},
+        "municipality_code": {"type": "string"}
+      }
+    },
+    "program": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string"},
+        "classification": {"type": "string"},
+        "public_funding_number": {"type": "string"}
+      }
+    },
+    "detected_at": {"type": "string"},
+    "effective_from": {"type": ["string", "null"]},
+    "severity": {"enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]},
+    "change_categories": {"type": "array", "items": {"type": "string"}},
+    "summary": {"type": "string"},
+    "vendor_impacts": {"type": "array", "items": {"type": "string"}},
+    "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}}
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "required": ["type", "evidence_level", "source_url", "description"],
+      "properties": {
+        "type": {"type": "string"},
+        "evidence_level": {"enum": ["CONFIRMED", "CORROBORATED", "INFERRED", "UNRESOLVED"]},
+        "source_url": {"type": "string"},
+        "snapshot_id": {"type": "string"},
+        "description": {"type": "string"},
+        "field": {"type": "string"},
+        "before": {},
+        "after": {}
+      }
+    }
+  }
+}

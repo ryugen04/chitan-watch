@@ -1,0 +1,52 @@
+# Chitan Watch
+
+Chitan Watch is a repository for building a制度変更 intelligence service around the official SSK 地単公費マスター and related official materials.
+
+The first rule of this project is simple: deterministic software detects changes; LLMs explain changes after they have been detected.
+
+## Current Scope
+
+This bootstrap contains:
+
+- documentation requested by the product specification
+- deterministic domain models for artifacts, snapshots, raw changes, change bundles, and evidence
+- CSV master schema validation and semantic diff primitives
+- a small fixture-backed web prototype for core screens
+- tests for parser and diff behavior
+
+It is not production complete yet. Live official-data crawling, persistent storage, authentication, notifications, and real LLM providers are later phases.
+
+## Repository Layout
+
+```text
+apps/web/           Static UI prototype for Changes, Upcoming, Master, Source Health
+crawler/            Python deterministic collection/parsing/diff foundation
+packages/domain/    Shared JSON schemas and domain notes
+schemas/master/     Versioned master schema and field groups
+prompts/            LLM prompt templates, kept out of source code
+tests/              Parser/diff fixtures and tests
+docs/               Investigation, architecture, domain model, master analysis, plan
+```
+
+## Run Checks
+
+```bash
+PYTHONPATH=crawler python3 -m unittest discover -s tests
+PYTHONPATH=crawler python3 -m chitan_watch.cli diff tests/fixtures/master_old.csv tests/fixtures/master_new.csv
+```
+
+For local UI preview:
+
+```bash
+cd apps/web
+python3 -m http.server 4173
+```
+
+Then open `http://localhost:4173`.
+
+## Official Starting Points
+
+- SSK 地単公費マスター: https://www.ssk.or.jp/seikyushiharai/titansys/index.html
+- MHLW 国公費・地単公費マスター page: https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html
+
+Do not treat discovered file URLs as permanent. Discover links from seed pages on each crawl.

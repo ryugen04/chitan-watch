@@ -1,0 +1,23 @@
+identity:
+  - prefecture_code
+  - municipality_code
+  - public_funding_number
+  - program_subdivision_code
+validity:
+  - valid_from
+  - valid_to
+eligibility:
+  - age_lower
+  - age_upper
+  - insurance_type
+  - income_condition
+  - patient_condition
+copayment:
+  - upper_limit
+  - per_visit_amount
+  - monthly_amount
+benefit:
+  - subsidy_method
+metadata:
+  - program_name
+  - classification

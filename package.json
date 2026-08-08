@@ -1,0 +1,10 @@
+{
+  "name": "chitan-watch",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Chitan Watch monorepo bootstrap",
+  "scripts": {
+    "web:dev": "cd apps/web && python3 -m http.server 4173",
+    "test:py": "PYTHONPATH=crawler python3 -m unittest discover -s tests"
+  }
+}

@@ -1,0 +1,34 @@
+version: 2026-03-30
+status: draft-bootstrap
+source_note: Confirm against official SSK item list PDF before production use.
+required_fields:
+  - prefecture_code
+  - municipality_code
+  - public_funding_number
+  - program_subdivision_code
+  - program_name
+  - valid_from
+  - valid_to
+optional_fields:
+  - classification
+  - age_lower
+  - age_upper
+  - insurance_type
+  - income_condition
+  - patient_condition
+  - upper_limit
+  - per_visit_amount
+  - monthly_amount
+  - subsidy_method
+identity_candidates:
+  primary:
+    - prefecture_code
+    - municipality_code
+    - public_funding_number
+    - program_subdivision_code
+  fallback:
+    - prefecture_code
+    - municipality_code
+    - normalized_program_name
+    - program_subdivision_code
+schema_break_policy: unexpected_missing_required_column_routes_to_admin_review

@@ -1,0 +1,4 @@
+prefecture_code,municipality_code,public_funding_number,program_subdivision_code,program_name,valid_from,valid_to,age_upper,copayment
+13,131016,80130001,1,こども医療費助成,2026-10-01,9999-12-31,22,500
+14,141003,80140001,1,ひとり親医療費助成,2025-04-01,9999-12-31,,0
+27,271004,80270001,1,こども医療費助成,2026-04-01,9999-12-31,18,0
