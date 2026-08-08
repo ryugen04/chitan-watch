@@ -58,3 +58,16 @@ Implemented deterministic snapshot metadata probing:
 - test SHA-256, content metadata, and HTTP failure handling
 
 Next increment should connect discovery output to snapshot probes for a full crawler run state, including `SUCCESS_NO_CHANGE`, `SUCCESS_CHANGED`, `FAILED`, and `PARTIAL_FAILURE` outcomes.
+
+
+## ORD-004 completed increment
+
+Implemented CSV structural analysis:
+
+- supports URL and file input
+- detects encoding from `utf-8-sig`, `utf-8`, then `cp932`
+- detects delimiter and header presence
+- reports SHA-256, byte length, column count, record count, headers, and inconsistent rows
+- records live SSK CSV facts without committing the CSV payload
+
+Next increment should extract the official item-list PDF text/table and build the 94-column positional schema mapping.

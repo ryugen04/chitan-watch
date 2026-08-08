@@ -47,3 +47,22 @@ Missing required columns stop semantic diff and produce `SCHEMA_BREAK`. Addition
 - SHA-256: 4f768cfe38af951701aba24f79723333961ee2ed9db0a914c14dedec902399bf
 
 The CSV bytes were not committed. Next parser work must inspect header/encoding/column semantics from an approved runtime artifact or object-storage snapshot.
+
+
+## Live CSV structural analysis
+
+`ORD-004` analyzed the current SSK CSV structurally without committing its payload:
+
+- Encoding: `utf-8-sig`
+- Delimiter: comma
+- Header row: not present
+- Column count: 94
+- Record count: 22,975
+- Inconsistent row count: 0
+- SHA-256: `4f768cfe38af951701aba24f79723333961ee2ed9db0a914c14dedec902399bf`
+
+Implications:
+
+- The parser cannot rely on CSV headers.
+- `schemas/master/2026-03-30.yaml` must be generated from or reconciled with the official item-list PDF before semantic parsing.
+- Record identity fields are still unresolved because column positions and official item names must be mapped first.

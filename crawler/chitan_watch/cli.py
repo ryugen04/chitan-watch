@@ -5,6 +5,7 @@ import json
 from dataclasses import asdict, is_dataclass
 from enum import Enum
 
+from .csv_analysis import analyze_csv_source
 from .diff import diff_master_records
 from .discovery import discover_seed_url
 from .models import ArtifactType
@@ -38,6 +39,9 @@ def main() -> int:
     snapshot_cmd.add_argument("url")
     snapshot_cmd.add_argument("--artifact-id", required=True)
 
+    analyze_cmd = sub.add_parser("analyze-csv", help="Analyze CSV structure from a URL or local file without storing payload")
+    analyze_cmd.add_argument("source")
+
     args = parser.parse_args()
 
     if args.command == "diff":
@@ -65,6 +69,11 @@ def main() -> int:
     if args.command == "snapshot":
         snapshot = fetch_snapshot(args.artifact_id, args.url)
         print(json.dumps(snapshot, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "analyze-csv":
+        analysis = analyze_csv_source(args.source)
+        print(json.dumps(analysis, default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2

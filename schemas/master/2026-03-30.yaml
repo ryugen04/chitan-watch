@@ -32,3 +32,16 @@ identity_candidates:
     - normalized_program_name
     - program_subdivision_code
 schema_break_policy: unexpected_missing_required_column_routes_to_admin_review
+
+
+observed_latest_csv:
+  observed_at: 2026-08-08
+  source_url: https://www.ssk.or.jp/seikyushiharai/titansys/index.files/m_regional_publicly_funded_all_20260803.csv
+  sha256: 4f768cfe38af951701aba24f79723333961ee2ed9db0a914c14dedec902399bf
+  encoding: utf-8-sig
+  delimiter: comma
+  has_header: false
+  column_count: 94
+  record_count: 22975
+  inconsistent_row_count: 0
+  production_parser_status: blocked_until_item_list_column_mapping

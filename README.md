@@ -72,3 +72,14 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli snapshot   https://www.ssk.or.jp/
 ```
 
 HTTP errors must be treated as failed snapshots, not as no-change results.
+
+
+## CSV Structural Analysis
+
+Analyze a selected CSV artifact without storing the payload:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli analyze-csv   https://www.ssk.or.jp/seikyushiharai/titansys/index.files/m_regional_publicly_funded_all_20260803.csv
+```
+
+The current live CSV is headerless, so production parsing must map columns from the official item-list document before semantic diffing.
