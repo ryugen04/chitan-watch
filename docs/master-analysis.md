@@ -112,3 +112,30 @@ The positional schema now records:
 - `mapping_status`: `csv_mapping_candidate_requires_review`
 
 This is now strong enough to start a gated parser prototype, but still requires manual review before production use.
+
+
+## Gated parser and identity validation
+
+`ORD-007` implemented a positional 94-column parser using `csv_fields`. The parser refuses to read source bytes unless either:
+
+- the schema mapping status is production-approved, or
+- the caller explicitly passes `--allow-candidate-mapping`
+
+This keeps the current mapping useful for investigation while preventing accidental production use.
+
+`ORD-008` validated the candidate identity fields from the live CSV:
+
+| Profile | Unique keys | Duplicate keys | Rows in duplicate groups |
+| --- | ---: | ---: | ---: |
+| 3+4+8+9 | 20,836 | 1,306 | 3,445 |
+| 3+4+8+9+10+11 | 21,619 | 911 | 2,267 |
+| 3+4+8+9+1 | 22,414 | 528 | 1,089 |
+| 3+4+8+9+1+10+11 | 22,845 | 113 | 243 |
+| full row | 22,975 | 0 | 0 |
+
+Findings:
+
+- `都道府県番号 + 市区町村コード + 公費負担者番号 + 事業内区分コード` is not unique at row level.
+- Adding validity dates or program name reduces but does not eliminate duplicates.
+- Full rows are unique, so duplicate groups represent multiple distinct rule/condition rows under the same business grouping, not duplicate records.
+- Record matching must model a business identity group plus row-level condition identity/fingerprint. Ambiguous matching must remain review-gated.

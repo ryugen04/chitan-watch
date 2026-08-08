@@ -95,3 +95,15 @@ Implemented XLSX structure analysis and reconciliation evidence:
 - reconciled the CSV's 94-column shape by creating `csv_fields` that exclude new item `79`
 
 Next increment should build a gated parser that can map the 94-column CSV rows using `csv_fields`, while refusing production mode until review clears the mapping status.
+
+
+## ORD-007/ORD-008 completed increment
+
+Implemented the gated parser and identity validation:
+
+- positional parser maps 94 headerless CSV columns using `csv_fields`
+- parser refuses candidate mappings unless explicitly allowed
+- schema column mismatch raises `MasterSchemaBreak`
+- identity validator compares multiple profiles and reports duplicate groups, blank identity parts, and full-row uniqueness
+
+Next increment should implement row-level condition fingerprints and semantic diff matching that groups by business identity while refusing ambiguous row matches.

@@ -105,3 +105,20 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli analyze-xlsx /tmp/chitan-20260803
 ```
 
 The current workbook has 47 prefecture sheets. Header rows expose 95 logical item candidates, while CSV has 94 columns; evidence indicates CSV likely excludes new item `79` (`その他制度に係る参考情報`).
+
+
+## Gated Master Parser
+
+Parse the live 94-column headerless CSV only with explicit candidate-mapping acknowledgement:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli parse-master   https://www.ssk.or.jp/seikyushiharai/titansys/index.files/m_regional_publicly_funded_all_20260803.csv   --allow-candidate-mapping
+```
+
+Validate candidate identity profiles:
+
+```bash
+PYTHONPATH=crawler python3 -m chitan_watch.cli validate-identity   https://www.ssk.or.jp/seikyushiharai/titansys/index.files/m_regional_publicly_funded_all_20260803.csv   --allow-candidate-mapping
+```
+
+Without `--allow-candidate-mapping`, parsing is intentionally blocked while the mapping status is `csv_mapping_candidate_requires_review`.

@@ -9,8 +9,10 @@ from .csv_analysis import analyze_csv_source
 from .diff import diff_master_records
 from .discovery import discover_seed_url
 from .models import ArtifactType
+from .identity import validate_record_identities
 from .events import build_change_bundle
 from .parser import parse_master_csv_file
+from .positional_master import DEFAULT_SCHEMA_PATH, parse_positional_csv_source, summarize_parse
 from .pdf_items import extract_pdf_text, parse_item_candidates
 from .snapshot import fetch_snapshot
 from .xlsx_analysis import analyze_xlsx_source
@@ -49,6 +51,17 @@ def main() -> int:
 
     xlsx_cmd = sub.add_parser("analyze-xlsx", help="Analyze XLSX workbook structure from a URL or local file without storing payload")
     xlsx_cmd.add_argument("source")
+
+    parse_master_cmd = sub.add_parser("parse-master", help="Parse the 94-column headerless master CSV with the positional schema")
+    parse_master_cmd.add_argument("source")
+    parse_master_cmd.add_argument("--schema", default=None)
+    parse_master_cmd.add_argument("--allow-candidate-mapping", action="store_true")
+    parse_master_cmd.add_argument("--max-records", type=int, default=None)
+
+    identity_cmd = sub.add_parser("validate-identity", help="Validate candidate record identity uniqueness for a master CSV")
+    identity_cmd.add_argument("source")
+    identity_cmd.add_argument("--schema", default=None)
+    identity_cmd.add_argument("--allow-candidate-mapping", action="store_true")
 
     args = parser.parse_args()
 
@@ -93,6 +106,27 @@ def main() -> int:
     if args.command == "analyze-xlsx":
         analysis = analyze_xlsx_source(args.source)
         print(json.dumps(analysis, default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "parse-master":
+        schema_path = args.schema or None
+        schema, records = parse_positional_csv_source(
+            args.source,
+            schema_path=schema_path or DEFAULT_SCHEMA_PATH,
+            allow_candidate_mapping=args.allow_candidate_mapping,
+            max_records=args.max_records,
+        )
+        print(json.dumps(summarize_parse(args.source, schema, records), default=encode, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "validate-identity":
+        schema_path = args.schema or None
+        _schema, records = parse_positional_csv_source(
+            args.source,
+            schema_path=schema_path or DEFAULT_SCHEMA_PATH,
+            allow_candidate_mapping=args.allow_candidate_mapping,
+        )
+        print(json.dumps(validate_record_identities(records), default=encode, ensure_ascii=False, indent=2))
         return 0
 
     return 2
