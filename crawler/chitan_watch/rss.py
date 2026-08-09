@@ -107,14 +107,40 @@ def _format_jst(value: str | None) -> str:
     return _parse_datetime(value).astimezone(JST).strftime("%Y-%m-%d %H:%M JST")
 
 
+def _source_layer(event: dict) -> str:
+    source_context = event.get("source_context") if isinstance(event.get("source_context"), dict) else {}
+    if source_context.get("source_layer"):
+        return str(source_context.get("source_layer"))
+    for category in event.get("change_categories") or ():
+        category_text = str(category)
+        if category_text.startswith("source-layer:"):
+            return category_text.removeprefix("source-layer:")
+    return ""
+
+
+def _feed_prefix(event: dict) -> str:
+    if _source_layer(event) == "municipality-policy-context":
+        return "自治体制度文脈更新"
+    return "地単公費マスター更新"
+
+
 def _event_action_sentence(event: dict) -> str:
     categories = set(event.get("change_categories") or ())
+    layer = _source_layer(event)
+    if layer == "municipality-policy-context":
+        if "artifact-added" in categories:
+            return "自治体公式ページの制度文脈を検知しました。"
+        if "artifact-changed" in categories:
+            return "自治体公式ページの制度文脈更新を検知しました。"
+        if "artifact-removed" in categories:
+            return "自治体公式ページの制度文脈ページ削除を検知しました。"
+        return "自治体制度文脈に関する変更を検知しました。"
     if "artifact-added" in categories:
-        return "社会保険診療報酬支払基金の公開ファイルを検知しました。"
+        return "公式ページまたは公開ファイルを検知しました。"
     if "artifact-changed" in categories:
-        return "社会保険診療報酬支払基金の公開ファイル更新を検知しました。"
+        return "公式ページまたは公開ファイルの更新を検知しました。"
     if "artifact-removed" in categories:
-        return "社会保険診療報酬支払基金の公開ファイル削除を検知しました。"
+        return "公式ページまたは公開ファイルの削除を検知しました。"
     if any(str(category).startswith("master-row-") for category in categories):
         return "地単公費マスターの内容変更を検知しました。"
     return "地単公費マスターに関する変更を検知しました。"
@@ -136,6 +162,8 @@ def _fallback_headline(event: dict) -> str:
 
 def _fallback_likely_impact(event: dict) -> list[str]:
     categories = set(event.get("change_categories") or ())
+    if _source_layer(event) == "municipality-policy-context":
+        return ["自治体制度ページの対象者、受給者証、自己負担、現物給付、償還払い、申請、更新日の確認が必要な可能性があります。"]
     if "artifact-removed" in categories:
         return ["参照している公式ファイル URL や取得処理の確認が必要な可能性があります。"]
     if "artifact-added" in categories or "artifact-changed" in categories:
@@ -254,7 +282,7 @@ def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFee
         item = ET.SubElement(channel, "item")
         program = event.get("program") or {}
         jurisdiction = event.get("jurisdiction") or {}
-        title = f"【地単公費マスター更新】{_headline(event)}"
+        title = f"【{_feed_prefix(event)}】{_headline(event)}"
         if event.get("rss_replay_label"):
             title = f"【再通知】{_headline(event)}"
         place = "-".join(part for part in (jurisdiction.get("prefecture_code"), jurisdiction.get("municipality_code")) if part)

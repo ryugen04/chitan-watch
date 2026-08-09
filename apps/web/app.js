@@ -59,7 +59,7 @@ const fallbackState = {
   sources: [
     { artifact_id: "art_master_csv", title: "Master CSV", type: "master_csv", state: "changed", sha256: "fixture", error: null, source_group: "master-latest-data", source_layer: "master-latest-data", source_owner: "ssk", source_role: "confirmed-master-list-download", jurisdiction_scope: "national", monitor_mode: "semantic_or_file_diff", notify_policy: "always", review_policy: "required" },
     { artifact_id: "art_mhlw_faq", title: "MHLW FAQ", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "policy-faq", source_layer: "policy-faq", source_owner: "mhlw", source_role: "policy-background-and-faq-index", jurisdiction_scope: "national", monitor_mode: "source_health", notify_policy: "important_only", review_policy: "conditional" },
-    { artifact_id: "art_municipality_seed", title: "札幌市 子ども医療費助成", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "municipality-policy-seed", source_layer: "municipality-policy-seed", source_owner: "municipality", source_role: "local-benefit-rule-context", jurisdiction_scope: "local", monitor_mode: "source_health", notify_policy: "health_only", review_policy: "none" },
+    { artifact_id: "art_municipality_seed", title: "札幌市 子ども医療費助成", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "municipality-policy-context", source_layer: "municipality-policy-context", source_owner: "municipality", source_role: "local-benefit-rule-context-signal", jurisdiction_scope: "local", monitor_mode: "semantic_context_diff", notify_policy: "important_only", review_policy: "conditional" },
   ],
   latest_run_id: "fixture-run",
   apiOnline: false,
@@ -261,11 +261,11 @@ function renderGuide() {
       </article>
       <article class="guide-section">
         <h2>現在の監視範囲</h2>
-        <p>現在の主な監視対象は、支払基金の titansys ページ、確定事業一覧 CSV/Excel、登録・運用資料、厚労省の変更・更新ページ、診療報酬情報提供サービスの制度マスター入口です。支払基金トップ更新情報と自治体 seed は、Source Health の取得状態確認として扱います。</p>
+        <p>現在の主な監視対象は、支払基金の titansys ページ、確定事業一覧 CSV/Excel、登録・運用資料、厚労省の変更・更新ページ、診療報酬情報提供サービスの制度マスター入口です。自治体制度ページは、支払基金マスターとは別の「自治体制度文脈」として現在の監視範囲に含めます。支払基金トップ更新情報は Source Health の取得状態確認として扱います。</p>
       </article>
       <article class="guide-section">
-        <h2>自治体 seed の扱い</h2>
-        <p>自治体個別ページは、受給者証、自己負担、現物給付、償還払いなどの実制度文脈を見るための seed です。支払基金マスター更新の一次検知元ではないため、通常の RSS には出さず Source Health にだけ出します。PMH は今回の監視範囲には入れません。</p>
+        <h2>自治体制度文脈</h2>
+        <p>自治体個別ページは、受給者証、自己負担、現物給付、償還払い、申請、更新日などの実制度文脈を見る現在スコープの情報源です。支払基金マスター更新そのものとは分け、「自治体制度文脈更新」として RSS に出します。PMH は今回の監視範囲には入れません。</p>
       </article>
       <article class="guide-section">
         <h2>情報層の分け方</h2>
@@ -275,14 +275,14 @@ function renderGuide() {
           <div><dt>policy-faq</dt><dd>厚労省の説明会、制度背景、FAQ、自治体向け説明です。</dd></div>
           <div><dt>reference-portal</dt><dd>診療報酬情報提供サービス側の公費負担医療制度マスター入口です。</dd></div>
           <div><dt>site-news-health</dt><dd>支払基金トップ更新情報の補助確認です。本命は titansys ページです。</dd></div>
-          <div><dt>municipality-policy-seed</dt><dd>自治体の医療費助成制度ページを実制度文脈として見る Source Health 用 seed です。</dd></div>
+          <div><dt>municipality-policy-context</dt><dd>自治体の医療費助成制度ページを、マスターとは別の制度文脈更新として見るレイヤーです。</dd></div>
         </dl>
       </article>
       <article class="guide-section">
         <h2>通知で見る順番</h2>
-        <p>RSS は公式ページやファイルの変化を知らせる入口です。制度変更の確定判断、本番マスター反映、ベンダー作業指示を自動で意味するものではありません。Severity は確認優先度、Review は人の確認要否、確度は根拠の強さ、Source Health 用の項目は取得状態の補助確認として読みます。自治体 seed の変化は通常 RSS には出しません。</p>
+        <p>RSS は公式ページやファイルの変化を知らせる入口です。制度変更の確定判断、本番マスター反映、ベンダー作業指示を自動で意味するものではありません。Severity は確認優先度、Review は人の確認要否、確度は根拠の強さ、Source Health 用の項目は取得状態の補助確認として読みます。自治体制度文脈は「自治体制度文脈更新」として、支払基金マスター更新とは別の見出しで読みます。</p>
         <ol>
-          <li>ソース層が master-latest-data か policy-faq かを確認します。</li>
+          <li>ソース層が master-latest-data、policy-faq、municipality-policy-context のどれかを確認します。</li>
           <li>基準日、CSV/Excel ファイル名、ファイルサイズ、検知日時を見ます。</li>
           <li>CSV 行差分があれば、公費負担者番号、自治体、制度名、適用期間を見ます。</li>
           <li>説明会・FAQ 更新なら、運用ルールや対象範囲の変更かを確認します。</li>
@@ -294,7 +294,7 @@ function renderGuide() {
       </article>
       <article class="guide-section">
         <h2>よくある読み違い</h2>
-        <p>地単公費マスターは、自治体医療費助成制度を全部網羅する制度カタログではありません。償還払い制度や、現物給付・併用レセプト・連記式医療費明細書の枠に入らない制度は対象外になり得ます。自治体 seed は、この違いを実例で確認するための補助線です。</p>
+        <p>地単公費マスターは、自治体医療費助成制度を全部網羅する制度カタログではありません。償還払い制度や、現物給付・併用レセプト・連記式医療費明細書の枠に入らない制度は対象外になり得ます。自治体制度文脈の通知は、この違いを実例で確認するための補助線です。</p>
       </article>
     </div>
     <section class="guide-section guide-wide">

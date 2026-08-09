@@ -28,14 +28,14 @@ class SourceRegistryTest(unittest.TestCase):
         self.assertIn("mhlw-chitan-policy-materials", entry_ids)
         self.assertIn("shinryohoshu-seido-master", entry_ids)
         self.assertIn("ssk-top-news", entry_ids)
-        self.assertIn("sapporo-child-medical-subsidy-seed", entry_ids)
-        self.assertIn("yokohama-child-medical-subsidy-seed", entry_ids)
-        self.assertIn("sumida-child-medical-subsidy-seed", entry_ids)
+        self.assertIn("sapporo-child-medical-subsidy-context", entry_ids)
+        self.assertIn("yokohama-child-medical-subsidy-context", entry_ids)
+        self.assertIn("sumida-child-medical-subsidy-context", entry_ids)
         self.assertFalse(any("pmh" in entry.id for entry in registry.entries))
-        municipality_entries = [entry for entry in registry.entries if entry.source_layer == "municipality-policy-seed"]
+        municipality_entries = [entry for entry in registry.entries if entry.source_layer == "municipality-policy-context"]
         self.assertEqual(3, len(municipality_entries))
-        self.assertTrue(all(entry.notify_policy == "health_only" for entry in municipality_entries))
-        self.assertTrue(all(entry.monitor_mode == "source_health" for entry in municipality_entries))
+        self.assertTrue(all(entry.notify_policy == "important_only" for entry in municipality_entries))
+        self.assertTrue(all(entry.monitor_mode == "semantic_context_diff" for entry in municipality_entries))
         data_entry = next(entry for entry in registry.entries if entry.id == "ssk-titansys-latest-master-data")
         self.assertIn(ArtifactType.MASTER_CSV, data_entry.artifact_types)
         self.assertIn(ArtifactType.MASTER_EXCEL, data_entry.artifact_types)
@@ -47,7 +47,7 @@ class SourceRegistryTest(unittest.TestCase):
         self.assertIn("policy-faq", layers)
         self.assertIn("reference-portal", layers)
         self.assertIn("site-news-health", layers)
-        self.assertIn("municipality-policy-seed", layers)
+        self.assertIn("municipality-policy-context", layers)
         self.assertTrue(all(entry.source_owner for entry in registry.entries))
 
     def test_registry_specs_capture_official_materials_with_metadata(self):
@@ -68,10 +68,10 @@ class SourceRegistryTest(unittest.TestCase):
         self.assertTrue(any(spec.source_layer == "master-registration-operation" for spec in specs))
         self.assertTrue(any(spec.source_layer == "policy-faq" for spec in specs))
         self.assertTrue(any(spec.source_layer == "reference-portal" for spec in specs))
-        self.assertTrue(any(spec.source_layer == "municipality-policy-seed" for spec in specs))
+        self.assertTrue(any(spec.source_layer == "municipality-policy-context" for spec in specs))
         self.assertTrue(any(spec.notify_policy == "always" for spec in specs))
         self.assertTrue(any("city." in spec.canonical_url for spec in specs))
-        self.assertTrue(all(spec.notify_policy == "health_only" for spec in specs if spec.source_layer == "municipality-policy-seed"))
+        self.assertTrue(all(spec.notify_policy == "important_only" for spec in specs if spec.source_layer == "municipality-policy-context"))
         self.assertFalse(any("digital.go.jp" in spec.canonical_url for spec in specs))
         self.assertFalse(any("example.com" in spec.canonical_url for spec in specs))
 

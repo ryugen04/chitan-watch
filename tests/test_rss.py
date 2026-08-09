@@ -87,6 +87,40 @@ class RssTest(unittest.TestCase):
         self.assertNotIn("master_field_diff", description)
         self.assertNotIn("A -> B", description)
 
+    def test_municipality_context_uses_distinct_feed_prefix(self):
+        xml = rss_xml_from_events(
+            [
+                {
+                    "id": "chg-muni",
+                    "severity": "LOW",
+                    "summary": "札幌市 子ども医療費助成 page changed",
+                    "detected_at": "2026-08-09T00:05:00+00:00",
+                    "program": {"name": "札幌市 子ども医療費助成"},
+                    "jurisdiction": {"prefecture_code": "01", "municipality_code": "011002"},
+                    "change_categories": ["artifact-changed", "source-layer:municipality-policy-context"],
+                    "source_context": {"source_layer": "municipality-policy-context", "source_owner": "municipality", "source_role": "local-benefit-rule-context-signal"},
+                    "evidence": [{"type": "artifact_snapshot", "evidence_level": "CONFIRMED"}],
+                    "interpretation": {
+                        "headline": "自治体制度文脈: 札幌市 子ども医療費助成 の公開資料の更新を検知しました",
+                        "summary": "自治体制度ページの制度文脈更新候補です。",
+                        "likely_impact": ["自己負担や現物給付の説明を確認してください。"],
+                        "recommended_action": "自治体公式ページの更新内容を確認してください。",
+                        "confidence": "CONFIRMED",
+                        "evidence_level": "CONFIRMED",
+                        "generated_by": "deterministic",
+                        "needs_review": False,
+                    },
+                }
+            ],
+            options=RssFeedOptions(site_url="https://example.test/chitan"),
+        )
+        item = ET.fromstring(xml).find("./channel/item")
+        self.assertIn("【自治体制度文脈更新】", item.findtext("title"))
+        self.assertNotIn("【地単公費マスター更新】", item.findtext("title"))
+        description = item.findtext("description") or ""
+        self.assertIn("ソース層: municipality-policy-context", description)
+        self.assertIn("情報元: municipality", description)
+
     def test_rss_xml_from_store_contains_change_items(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             store = self.make_store(tmpdir)
