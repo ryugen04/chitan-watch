@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "ssk-titansys-page",
+      "title": "支払基金 地単公費マスター関連ページ",
+      "seed_url": "https://www.ssk.or.jp/seikyushiharai/titansys/index.html",
+      "source_id": "ssk-chitan",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "source-page",
+      "monitor_mode": "source_health",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "direct": true
+    },
+    {
+      "id": "ssk-titansys-official-materials",
+      "title": "支払基金 地単公費マスター公式資料",
+      "seed_url": "https://www.ssk.or.jp/seikyushiharai/titansys/index.html",
+      "source_id": "ssk-chitan",
+      "allowed_domains": [
+        "www.ssk.or.jp",
+        "www.mhlw.go.jp"
+      ],
+      "artifact_types": [
+        "master_csv",
+        "master_excel",
+        "schema",
+        "input_guide",
+        "manual",
+        "examples",
+        "faq",
+        "mhlw_document",
+        "other"
+      ],
+      "source_group": "official-materials",
+      "monitor_mode": "file_hash",
+      "notify_policy": "always",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "include_title_keywords": [
+        "地単公費",
+        "地方単独",
+        "国公費",
+        "FAQ"
+      ],
+      "include_url_keywords": [
+        "titansys/index.files",
+        "mhlw.go.jp/stf/"
+      ],
+      "exclude_title_keywords": [
+        "サイトマップ",
+        "関連サイト",
+        "トップページ"
+      ],
+      "direct": false
+    },
+    {
+      "id": "ssk-chitan-context-page",
+      "title": "支払基金 地方単独医療費助成事業関連情報",
+      "seed_url": "https://www.ssk.or.jp/seikyushiharai/chitan/chitan_01.html",
+      "source_id": "ssk-chitan",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "policy-context",
+      "monitor_mode": "source_health",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "direct": true
+    },
+    {
+      "id": "ssk-chitan-commissioned-status",
+      "title": "支払基金が受託している医療費助成事業",
+      "seed_url": "https://www.ssk.or.jp/seikyushiharai/chitan/jutaku/index.html",
+      "source_id": "ssk-chitan",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "commissioned-status",
+      "monitor_mode": "link_presence",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "direct": true
+    },
+    {
+      "id": "mhlw-chitan-policy-page",
+      "title": "厚労省 国公費・地単公費マスタの変更・更新関連情報",
+      "seed_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html",
+      "source_id": "mhlw-chitan",
+      "allowed_domains": [],
+      "artifact_types": [
+        "mhlw_document"
+      ],
+      "source_group": "policy-context",
+      "monitor_mode": "source_health",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "direct": true
+    }
+  ]
+}

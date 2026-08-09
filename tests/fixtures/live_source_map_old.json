@@ -1,5 +1,13 @@
 {
   "sources": {
-    "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/master_20260803.csv": "tests/fixtures/master_positional_diff_old.csv"
+    "https://www.ssk.or.jp/seikyushiharai/titansys/index.html": "tests/fixtures/ssk_hub.html",
+    "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/master_20260803.csv": "tests/fixtures/master_positional_diff_old.csv",
+    "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/master_20260803.xlsx": "tests/fixtures/artifact_note_old.txt",
+    "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/siryo2_20260330.pdf": "tests/fixtures/artifact_note_old.txt",
+    "https://www.ssk.or.jp/seikyushiharai/titansys/index.files/faq.pdf": "tests/fixtures/artifact_note_old.txt",
+    "https://www.mhlw.go.jp/stf/newpage_67679.html": "tests/fixtures/artifact_note_old.txt",
+    "https://www.ssk.or.jp/seikyushiharai/chitan/chitan_01.html": "tests/fixtures/artifact_note_old.txt",
+    "https://www.ssk.or.jp/seikyushiharai/chitan/jutaku/index.html": "tests/fixtures/artifact_note_old.txt",
+    "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html": "tests/fixtures/artifact_note_old.txt"
   }
 }

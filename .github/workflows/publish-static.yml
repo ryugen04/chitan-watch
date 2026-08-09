@@ -58,7 +58,7 @@ jobs:
         env:
           PYTHONPATH: crawler
         run: |
-          python3 -m chitan_watch.cli run-official-local             https://www.ssk.or.jp/seikyushiharai/titansys/index.html             --store-dir storage/chitan-watch             --artifact-type master_csv             --previous latest             --run-id "run-${GITHUB_RUN_ID}"             --allow-candidate-mapping
+          python3 -m chitan_watch.cli run-official-local             --source-registry crawler/chitan_watch/source_registry.json             --store-dir storage/chitan-watch             --source-id chitan-watch             --previous latest             --run-id "run-${GITHUB_RUN_ID}"             --allow-candidate-mapping
 
       - name: Export static site
         env:

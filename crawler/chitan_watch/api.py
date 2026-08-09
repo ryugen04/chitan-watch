@@ -119,9 +119,18 @@ def build_api_payload(path: str, store: LocalRunStore, site_url: str = "http://1
                     "state": change.get("state") if change else "unknown",
                     "sha256": record.snapshot.sha256 if record.snapshot else None,
                     "error": record.error,
+                    "source_group": record.artifact.source_group,
+                    "monitor_mode": record.artifact.monitor_mode,
+                    "notify_policy": record.artifact.notify_policy,
+                    "review_policy": record.artifact.review_policy,
+                    "freshness_sla": record.artifact.freshness_sla,
                 }
             )
-        return json_response({"latest_run_id": latest, "status": evaluation.get("status"), "sources": sources})
+        groups = {}
+        for source in sources:
+            group = source.get("source_group") or "uncategorized"
+            groups[group] = groups.get(group, 0) + 1
+        return json_response({"latest_run_id": latest, "status": evaluation.get("status"), "source_groups": groups, "sources": sources})
     return None
 
 

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from .master_diff import MasterRowChange
-from .models import CrawlerRunStatus, EvidenceLevel, Severity
+from .models import ArtifactType, CrawlerRunStatus, EvidenceLevel, Severity
 from .run_state import ArtifactRunChange, CrawlerRunEvaluation
 
 
@@ -225,13 +225,43 @@ def interpretation_for_master_change(
     )
 
 
+def _artifact_kind_label(artifact_type: ArtifactType) -> str:
+    return {
+        ArtifactType.MASTER_CSV: "地単公費マスター CSV",
+        ArtifactType.MASTER_EXCEL: "地単公費マスター Excel",
+        ArtifactType.SCHEMA: "項目一覧",
+        ArtifactType.INPUT_GUIDE: "入力要領",
+        ArtifactType.MANUAL: "操作マニュアル",
+        ArtifactType.EXAMPLES: "入力例",
+        ArtifactType.FAQ: "FAQ",
+        ArtifactType.MHLW_DOCUMENT: "厚労省資料",
+        ArtifactType.HTML: "公式ページ",
+        ArtifactType.OTHER: "公式資料",
+    }.get(artifact_type, "公式資料")
+
+
+def _artifact_likely_impact(change: ArtifactRunChange) -> tuple[str, ...]:
+    if change.artifact_type == ArtifactType.MASTER_EXCEL:
+        return ("CSV と同等または補完的な公式マスターとして、CSV との差異確認が必要な可能性があります。",)
+    if change.artifact_type == ArtifactType.SCHEMA:
+        return ("項目定義の変更により、CSV パーサや差分解釈の見直しが必要な可能性があります。",)
+    if change.artifact_type in {ArtifactType.INPUT_GUIDE, ArtifactType.MANUAL, ArtifactType.EXAMPLES, ArtifactType.FAQ}:
+        return ("登録・運用ルールやレビュー観点が変わった可能性があります。",)
+    if change.artifact_type == ArtifactType.MHLW_DOCUMENT:
+        return ("制度運用や現物給付化の政策文脈が更新された可能性があります。",)
+    if change.artifact_type == ArtifactType.HTML:
+        return ("公式ページの掲載内容やリンク構成が変わった可能性があります。",)
+    return ("地単公費関連の公式資料が更新された可能性があります。",)
+
+
 def interpretation_for_artifact_change(change: ArtifactRunChange, evidence: tuple[ChangeEvidence, ...], severity: Severity) -> ChangeInterpretation:
     action = {
-        "added": "公開ファイルを検知しました",
-        "changed": "公開ファイルの更新を検知しました",
-        "removed": "公開ファイルの削除を検知しました",
-        "failed": "公開ファイルの確認に失敗しました",
-    }.get(change.state, f"公開ファイルの状態を検知しました（{change.state}）")
+        "added": "公開資料を検知しました",
+        "changed": "公開資料の更新を検知しました",
+        "removed": "公開資料の削除を検知しました",
+        "failed": "公開資料の確認に失敗しました",
+    }.get(change.state, f"公開資料の状態を検知しました（{change.state}）")
+    kind = _artifact_kind_label(change.artifact_type)
     if change.state == "failed":
         return ChangeInterpretation(
             headline=f"{change.title} の取得確認に失敗しました",
@@ -243,13 +273,13 @@ def interpretation_for_artifact_change(change: ArtifactRunChange, evidence: tupl
             needs_review=True,
         )
     return ChangeInterpretation(
-        headline=f"{change.title} の{action}",
-        summary="社会保険診療報酬支払基金の公開資料として監視対象に記録されています。",
-        likely_impact=("地単公費マスター取り込み対象の確認が必要な可能性があります。",),
-        recommended_action="詳細ページから公式ソースと検知内容を確認し、必要に応じてマスター更新作業に進んでください。",
+        headline=f"{kind} {change.title} の{action}",
+        summary=f"{kind}として監視対象に入っている公式ソースの状態変化です。",
+        likely_impact=_artifact_likely_impact(change),
+        recommended_action="詳細ページから公式ソースと検知内容を確認し、制度変更、定義変更、運用資料更新のどれに当たるかを切り分けてください。",
         confidence=EvidenceLevel.CONFIRMED,
         evidence_level=_evidence_level(evidence),
-        needs_review=False,
+        needs_review=change.review_policy == "required",
     )
 
 
@@ -299,10 +329,25 @@ def event_from_master_change(run: CrawlerRunEvaluation, change: MasterRowChange,
     )
 
 
-def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunChange) -> ChangeEventCandidate:
-    severity = Severity.INFO if change.state == "unchanged" else Severity.LOW
+def _severity_for_artifact_change(change: ArtifactRunChange) -> Severity:
     if change.state == "failed":
-        severity = Severity.HIGH
+        return Severity.HIGH
+    if change.artifact_type in {ArtifactType.SCHEMA, ArtifactType.INPUT_GUIDE} and change.state in {"added", "changed", "removed"}:
+        return Severity.MEDIUM
+    return Severity.INFO if change.state == "unchanged" else Severity.LOW
+
+
+def _category_for_artifact_change(change: ArtifactRunChange) -> tuple[str, ...]:
+    categories = [f"artifact-{change.state}", f"artifact-type:{change.artifact_type.value}"]
+    if change.artifact_type in {ArtifactType.SCHEMA, ArtifactType.INPUT_GUIDE, ArtifactType.MANUAL, ArtifactType.EXAMPLES, ArtifactType.FAQ, ArtifactType.MHLW_DOCUMENT, ArtifactType.OTHER, ArtifactType.HTML}:
+        categories.append("document-update")
+    if change.source_group:
+        categories.append(f"source-group:{change.source_group}")
+    return tuple(categories)
+
+
+def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunChange) -> ChangeEventCandidate:
+    severity = _severity_for_artifact_change(change)
     summary = f"Artifact {change.title} is {change.state}"
     evidence = (
         ChangeEvidence(
@@ -310,7 +355,7 @@ def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunCha
             evidence_level=EvidenceLevel.CONFIRMED if change.state != "failed" else EvidenceLevel.UNRESOLVED,
             source_url=change.canonical_url,
             snapshot_id=change.current_snapshot_id,
-            description=change.error or f"Artifact state is {change.state}",
+            description=change.error or f"Artifact state is {change.state}; monitor={change.monitor_mode or 'file_hash'}; notify={change.notify_policy or 'always'}",
             before=change.previous_sha256,
             after=change.current_sha256,
         ),
@@ -323,13 +368,13 @@ def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunCha
         detected_at=run.evaluated_at,
         effective_from=None,
         severity=severity,
-        change_categories=(f"artifact-{change.state}",),
+        change_categories=_category_for_artifact_change(change),
         summary=summary,
-        vendor_impacts=("source-monitoring",) if change.state == "failed" else ("master-import",),
+        vendor_impacts=("source-monitoring",) if change.state == "failed" else ("source-monitoring", "document-review"),
         evidence=evidence,
         source_run_status=run.status,
         interpretation=interpretation,
-        review_required=change.state == "failed",
+        review_required=change.state == "failed" or change.review_policy == "required",
     )
 
 
@@ -337,14 +382,17 @@ def build_change_event_bundle(run_id: str, run: CrawlerRunEvaluation) -> ChangeE
     events: list[ChangeEventCandidate] = []
     master_snapshot_id = None
     source_url = "local://master-diff"
+    master_diff_has_events = bool(run.master_diff and run.master_diff.diff and run.master_diff.diff.has_changes)
     if run.master_diff and run.master_diff.diff:
         source_url = run.master_diff.new_source
         for change in run.master_diff.diff.changes:
             events.append(event_from_master_change(run, change, source_url=source_url, snapshot_id=master_snapshot_id))
-    else:
-        for change in run.artifact_changes:
-            if change.state != "unchanged":
-                events.append(event_from_artifact_change(run, change))
+    for change in run.artifact_changes:
+        if change.state == "unchanged":
+            continue
+        if master_diff_has_events and change.artifact_type == ArtifactType.MASTER_CSV and change.state == "changed":
+            continue
+        events.append(event_from_artifact_change(run, change))
     if run.status in {CrawlerRunStatus.FAILED, CrawlerRunStatus.PARTIAL_FAILURE, CrawlerRunStatus.SCHEMA_BREAK} and not events:
         events.extend(event_from_artifact_change(run, change) for change in run.artifact_changes if change.state == "failed")
     return ChangeEventBundle(run_id=run_id, source_id=run.source_id, generated_at=run.evaluated_at, events=tuple(events))

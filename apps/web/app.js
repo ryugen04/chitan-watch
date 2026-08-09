@@ -43,8 +43,8 @@ const fallbackState = {
     },
   ],
   sources: [
-    { artifact_id: "art_master_csv", title: "Master CSV", type: "master_csv", state: "changed", sha256: "fixture", error: null },
-    { artifact_id: "art_schema", title: "Schema PDF", type: "schema", state: "unchanged", sha256: "fixture", error: null },
+    { artifact_id: "art_master_csv", title: "Master CSV", type: "master_csv", state: "changed", sha256: "fixture", error: null, source_group: "official-materials", monitor_mode: "semantic_diff", notify_policy: "always", review_policy: "conditional" },
+    { artifact_id: "art_schema", title: "Schema PDF", type: "schema", state: "unchanged", sha256: "fixture", error: null, source_group: "official-materials", monitor_mode: "file_hash", notify_policy: "always", review_policy: "conditional" },
   ],
   latest_run_id: "fixture-run",
   apiOnline: false,
@@ -245,7 +245,11 @@ function renderGuide() {
       </article>
       <article class="guide-section">
         <h2>Chitan Watch の設計</h2>
-        <p>サイトはサーバーを持たず、GitHub Pages で静的ファイルとして公開します。定期実行で生成した JSON を画面が読み、RSS は同じ変更データから作ります。Slack などの RSS 購読先は、この静的 RSS を読むだけです。</p>
+        <p>サイトはサーバーを持たず、GitHub Pages で静的ファイルとして公開します。Source Registry に登録した公式ページと資料を定期確認し、生成した JSON を画面が読みます。RSS は同じ変更データから作ります。</p>
+      </article>
+      <article class="guide-section">
+        <h2>現在の監視範囲</h2>
+        <p>MVP では、支払基金の地単公費マスター関連ページ、確定事業一覧 CSV と Excel、項目一覧、入力要領、入力例、FAQ、委託状況、厚労省の関連資料を監視します。自治体個別ページは公式裏取り候補として段階導入します。</p>
       </article>
       <article class="guide-section">
         <h2>データの構造</h2>
@@ -311,8 +315,14 @@ function renderGuide() {
 
 function renderSources() {
   const run = latestRun();
-  const rows = state.sources.map(source => `<tr><td>${escapeHtml(source.title)}</td><td><span class="source-state">${escapeHtml(source.state)}</span></td><td>${escapeHtml(source.type)}</td><td>${escapeHtml(source.sha256 ? source.sha256.slice(0, 12) : "")}</td><td>${escapeHtml(source.error ?? "")}</td></tr>`).join("");
-  return `<section class="table-panel"><div class="run-strip"><span class="status-dot ${statusClass(run?.status)}"></span><strong>${escapeHtml(run?.status ?? "NO_RUN")}</strong><span class="meta">Latest: ${escapeHtml(state.latest_run_id ?? "-")}</span></div><table class="table"><tr><th>Source</th><th>State</th><th>Type</th><th>SHA-256</th><th>Error</th></tr>${rows}</table></section>`;
+  const groups = state.sources.reduce((acc, source) => {
+    const key = source.source_group || "uncategorized";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const groupText = Object.entries(groups).map(([name, count]) => `${escapeHtml(name)} ${count}`).join(" / ");
+  const rows = state.sources.map(source => `<tr><td>${escapeHtml(source.title)}</td><td><span class="source-state">${escapeHtml(source.state)}</span></td><td>${escapeHtml(source.type)}</td><td>${escapeHtml(source.source_group ?? "")}</td><td>${escapeHtml(source.monitor_mode ?? "")}</td><td>${escapeHtml(source.notify_policy ?? "")}</td><td>${escapeHtml(source.review_policy ?? "")}</td><td>${escapeHtml(source.sha256 ? source.sha256.slice(0, 12) : "")}</td><td>${escapeHtml(source.error ?? "")}</td></tr>`).join("");
+  return `<section class="table-panel"><div class="run-strip"><span class="status-dot ${statusClass(run?.status)}"></span><strong>${escapeHtml(run?.status ?? "NO_RUN")}</strong><span class="meta">Latest: ${escapeHtml(state.latest_run_id ?? "-")}</span></div><p class="page-note">監視対象: ${groupText || "未設定"}</p><table class="table"><tr><th>Source</th><th>State</th><th>Type</th><th>Group</th><th>Monitor</th><th>Notify</th><th>Review</th><th>SHA-256</th><th>Error</th></tr>${rows}</table></section>`;
 }
 
 function titleFor(route) {

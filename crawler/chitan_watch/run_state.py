@@ -24,6 +24,12 @@ class ArtifactSourceSpec:
     canonical_url: str
     path: str | None = None
     error: str | None = None
+    source_group: str | None = None
+    monitor_mode: str | None = None
+    notify_policy: str | None = None
+    review_policy: str | None = None
+    evidence_level: str | None = None
+    freshness_sla: str | None = None
 
 
 @dataclass(frozen=True)
@@ -53,6 +59,11 @@ class ArtifactRunChange:
     previous_snapshot_id: str | None = None
     current_snapshot_id: str | None = None
     error: str | None = None
+    source_group: str | None = None
+    monitor_mode: str | None = None
+    notify_policy: str | None = None
+    review_policy: str | None = None
+    freshness_sla: str | None = None
 
 
 @dataclass(frozen=True)
@@ -95,6 +106,11 @@ def artifact_from_spec(spec: ArtifactSourceSpec, source_id: str) -> Artifact:
         type=spec.type,
         title=spec.title,
         canonical_url=spec.canonical_url,
+        source_group=spec.source_group,
+        monitor_mode=spec.monitor_mode,
+        notify_policy=spec.notify_policy,
+        review_policy=spec.review_policy,
+        freshness_sla=spec.freshness_sla,
     )
 
 
@@ -141,6 +157,11 @@ def _artifact_record_from_dict(raw: dict[str, Any]) -> ArtifactSnapshotRecord:
         discovered_at=artifact_raw.get("discovered_at"),
         last_seen_at=artifact_raw.get("last_seen_at"),
         active=bool(artifact_raw.get("active", True)),
+        source_group=artifact_raw.get("source_group"),
+        monitor_mode=artifact_raw.get("monitor_mode"),
+        notify_policy=artifact_raw.get("notify_policy"),
+        review_policy=artifact_raw.get("review_policy"),
+        freshness_sla=artifact_raw.get("freshness_sla"),
     )
     snapshot_raw = raw.get("snapshot")
     snapshot = None
@@ -184,6 +205,12 @@ def specs_from_dict(raw: dict[str, Any]) -> tuple[ArtifactSourceSpec, ...]:
             canonical_url=str(item["canonical_url"]),
             path=item.get("path"),
             error=item.get("error"),
+            source_group=item.get("source_group"),
+            monitor_mode=item.get("monitor_mode"),
+            notify_policy=item.get("notify_policy"),
+            review_policy=item.get("review_policy"),
+            evidence_level=item.get("evidence_level"),
+            freshness_sla=item.get("freshness_sla"),
         )
         for item in raw.get("artifacts", ())
     )
@@ -216,6 +243,11 @@ def compare_artifact_manifests(previous: SnapshotManifest | None, current: Snaps
                     previous_sha256=old.snapshot.sha256 if old.snapshot else None,
                     previous_snapshot_id=old.snapshot.id if old.snapshot else None,
                     error=old.error,
+                    source_group=artifact.source_group,
+                    monitor_mode=artifact.monitor_mode,
+                    notify_policy=artifact.notify_policy,
+                    review_policy=artifact.review_policy,
+                    freshness_sla=artifact.freshness_sla,
                 )
             )
             continue
@@ -230,6 +262,11 @@ def compare_artifact_manifests(previous: SnapshotManifest | None, current: Snaps
                     previous_sha256=old.snapshot.sha256 if old and old.snapshot else None,
                     previous_snapshot_id=old.snapshot.id if old and old.snapshot else None,
                     error=new.error,
+                    source_group=artifact.source_group,
+                    monitor_mode=artifact.monitor_mode,
+                    notify_policy=artifact.notify_policy,
+                    review_policy=artifact.review_policy,
+                    freshness_sla=artifact.freshness_sla,
                 )
             )
             continue
@@ -243,6 +280,11 @@ def compare_artifact_manifests(previous: SnapshotManifest | None, current: Snaps
                     state="added",
                     current_sha256=new.snapshot.sha256 if new.snapshot else None,
                     current_snapshot_id=new.snapshot.id if new.snapshot else None,
+                    source_group=artifact.source_group,
+                    monitor_mode=artifact.monitor_mode,
+                    notify_policy=artifact.notify_policy,
+                    review_policy=artifact.review_policy,
+                    freshness_sla=artifact.freshness_sla,
                 )
             )
             continue
@@ -262,6 +304,11 @@ def compare_artifact_manifests(previous: SnapshotManifest | None, current: Snaps
                 current_sha256=new_sha,
                 previous_snapshot_id=old.snapshot.id if old.snapshot else None,
                 current_snapshot_id=new.snapshot.id if new.snapshot else None,
+                source_group=artifact.source_group,
+                monitor_mode=artifact.monitor_mode,
+                notify_policy=artifact.notify_policy,
+                review_policy=artifact.review_policy,
+                freshness_sla=artifact.freshness_sla,
             )
         )
     return tuple(changes)

@@ -22,6 +22,19 @@ class ArtifactType(StrEnum):
     OTHER = "other"
 
 
+class NotifyPolicy(StrEnum):
+    ALWAYS = "always"
+    IMPORTANT_ONLY = "important_only"
+    HEALTH_ONLY = "health_only"
+    NEVER = "never"
+
+
+class ReviewPolicy(StrEnum):
+    REQUIRED = "required"
+    CONDITIONAL = "conditional"
+    NONE = "none"
+
+
 class CrawlerRunStatus(StrEnum):
     RUNNING = "RUNNING"
     SUCCESS_NO_CHANGE = "SUCCESS_NO_CHANGE"
@@ -83,6 +96,11 @@ class Artifact:
     discovered_at: str | None = None
     last_seen_at: str | None = None
     active: bool = True
+    source_group: str | None = None
+    monitor_mode: str | None = None
+    notify_policy: str | None = None
+    review_policy: str | None = None
+    freshness_sla: str | None = None
 
 
 @dataclass(frozen=True)

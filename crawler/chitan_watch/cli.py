@@ -12,7 +12,7 @@ from .models import ArtifactType
 from .api import main as api_main
 from .identity import validate_record_identities
 from .events import build_change_bundle
-from .live_crawl import DEFAULT_ALLOWED_DOMAINS, DEFAULT_ARTIFACT_TYPES, execute_live_local_run
+from .live_crawl import DEFAULT_ALLOWED_DOMAINS, DEFAULT_ARTIFACT_TYPES, execute_live_local_run, execute_registry_local_run
 from .local_store import DEFAULT_STORE_DIR, execute_local_run
 from .master_diff import diff_master_snapshots
 from .master_snapshot import build_master_snapshot
@@ -109,7 +109,8 @@ def main() -> int:
     run_local_cmd.add_argument("--overwrite", action="store_true")
 
     run_official_cmd = sub.add_parser("run-official-local", help="Discover official artifacts and execute a local crawler run")
-    run_official_cmd.add_argument("seed_url")
+    run_official_cmd.add_argument("seed_url", nargs="?")
+    run_official_cmd.add_argument("--source-registry", default=None, help="JSON source registry for curated multi-source monitoring")
     run_official_cmd.add_argument("--store-dir", default=str(DEFAULT_STORE_DIR))
     run_official_cmd.add_argument("--source-id", default="ssk-chitan")
     run_official_cmd.add_argument("--allowed-domain", action="append", dest="allowed_domains")
@@ -284,25 +285,44 @@ def main() -> int:
         return 0
 
     if args.command == "run-official-local":
-        allowed_domains = tuple(args.allowed_domains or DEFAULT_ALLOWED_DOMAINS)
-        artifact_types = tuple(ArtifactType(value) for value in (args.artifact_types or ())) or DEFAULT_ARTIFACT_TYPES
-        result = execute_live_local_run(
-            args.seed_url,
-            store_dir=args.store_dir,
-            source_id=args.source_id,
-            allowed_domains=allowed_domains,
-            artifact_types=artifact_types,
-            seed_html_file=args.seed_html_file,
-            source_map_file=args.source_map_file,
-            run_id=args.run_id,
-            generated_at=args.generated_at,
-            previous=args.previous,
-            master_artifact_id=args.master_artifact_id,
-            schema_path=args.schema or DEFAULT_SCHEMA_PATH,
-            allow_candidate_mapping=args.allow_candidate_mapping,
-            overwrite=args.overwrite,
-            limit=args.limit,
-        )
+        if args.source_registry:
+            result = execute_registry_local_run(
+                args.source_registry,
+                store_dir=args.store_dir,
+                source_id=args.source_id,
+                seed_html_file=args.seed_html_file,
+                source_map_file=args.source_map_file,
+                run_id=args.run_id,
+                generated_at=args.generated_at,
+                previous=args.previous,
+                master_artifact_id=args.master_artifact_id,
+                schema_path=args.schema or DEFAULT_SCHEMA_PATH,
+                allow_candidate_mapping=args.allow_candidate_mapping,
+                overwrite=args.overwrite,
+                limit=args.limit,
+            )
+        else:
+            if not args.seed_url:
+                parser.error("run-official-local requires seed_url unless --source-registry is provided")
+            allowed_domains = tuple(args.allowed_domains or DEFAULT_ALLOWED_DOMAINS)
+            artifact_types = tuple(ArtifactType(value) for value in (args.artifact_types or ())) or DEFAULT_ARTIFACT_TYPES
+            result = execute_live_local_run(
+                args.seed_url,
+                store_dir=args.store_dir,
+                source_id=args.source_id,
+                allowed_domains=allowed_domains,
+                artifact_types=artifact_types,
+                seed_html_file=args.seed_html_file,
+                source_map_file=args.source_map_file,
+                run_id=args.run_id,
+                generated_at=args.generated_at,
+                previous=args.previous,
+                master_artifact_id=args.master_artifact_id,
+                schema_path=args.schema or DEFAULT_SCHEMA_PATH,
+                allow_candidate_mapping=args.allow_candidate_mapping,
+                overwrite=args.overwrite,
+                limit=args.limit,
+            )
         print(json.dumps(result, default=encode, ensure_ascii=False, indent=2))
         return 0
 

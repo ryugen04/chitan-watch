@@ -9,6 +9,7 @@ from .discovery import discover_artifacts, discover_seed_url
 from .local_store import DEFAULT_STORE_DIR, LocalRunResult, execute_local_run
 from .models import ArtifactType
 from .run_state import ArtifactSourceSpec
+from .source_registry import DEFAULT_SOURCE_REGISTRY_PATH, load_source_registry, registry_specs
 
 DEFAULT_ALLOWED_DOMAINS = ("www.ssk.or.jp", "www.mhlw.go.jp")
 DEFAULT_ARTIFACT_TYPES = (ArtifactType.MASTER_CSV, ArtifactType.MASTER_EXCEL, ArtifactType.SCHEMA)
@@ -92,6 +93,46 @@ def execute_live_local_run(
     )
     return execute_local_run(
         discovery.specs,
+        store_dir=store_dir,
+        source_id=source_id,
+        run_id=run_id,
+        generated_at=generated_at,
+        previous=previous,
+        master_artifact_id=master_artifact_id,
+        allow_candidate_mapping=allow_candidate_mapping,
+        schema_path=schema_path,
+        overwrite=overwrite,
+    )
+
+
+def execute_registry_local_run(
+    registry_file: str | Path = DEFAULT_SOURCE_REGISTRY_PATH,
+    store_dir: str | Path = DEFAULT_STORE_DIR,
+    source_id: str = "chitan-watch",
+    seed_html_file: str | Path | None = None,
+    source_map_file: str | Path | None = None,
+    run_id: str | None = None,
+    generated_at: str | None = None,
+    previous: str | None = "latest",
+    master_artifact_id: str | None = None,
+    allow_candidate_mapping: bool = False,
+    schema_path: str | Path | None = None,
+    overwrite: bool = False,
+    limit: int | None = None,
+) -> LocalRunResult:
+    registry = load_source_registry(registry_file)
+    seed_html_by_url = {}
+    if seed_html_file:
+        html = Path(seed_html_file).read_text(encoding="utf-8")
+        seed_html_by_url = {entry.seed_url: html for entry in registry.entries}
+    specs = registry_specs(
+        registry,
+        source_map=load_source_map(source_map_file),
+        seed_html_by_url=seed_html_by_url,
+        limit=limit,
+    )
+    return execute_local_run(
+        specs,
         store_dir=store_dir,
         source_id=source_id,
         run_id=run_id,

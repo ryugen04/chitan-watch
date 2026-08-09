@@ -10,7 +10,7 @@ import unittest
 
 from chitan_watch.api import build_api_payload
 from chitan_watch.change_events import build_change_event_bundle
-from chitan_watch.live_crawl import execute_live_local_run
+from chitan_watch.live_crawl import execute_live_local_run, execute_registry_local_run
 from chitan_watch.local_store import LocalRunStore, execute_local_run
 from chitan_watch.models import ArtifactType, CrawlerRunStatus
 from chitan_watch.run_state import load_specs
@@ -74,6 +74,41 @@ class ProductSliceTest(unittest.TestCase):
         self.assertEqual("live-new", events["run_id"])
         self.assertGreaterEqual(first.change_event_count, 1)
 
+
+    def test_registry_backed_run_emits_master_and_document_events(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            execute_registry_local_run(
+                store_dir=tmpdir,
+                seed_html_file=FIXTURES / "ssk_hub.html",
+                source_map_file=FIXTURES / "live_source_map_old.json",
+                run_id="registry-old",
+                generated_at="2026-08-09T00:00:00+00:00",
+                previous="none",
+                source_id="chitan-watch",
+                allow_candidate_mapping=True,
+            )
+            second = execute_registry_local_run(
+                store_dir=tmpdir,
+                seed_html_file=FIXTURES / "ssk_hub.html",
+                source_map_file=FIXTURES / "live_source_map_new.json",
+                run_id="registry-new",
+                generated_at="2026-08-09T00:05:00+00:00",
+                previous="latest",
+                source_id="chitan-watch",
+                allow_candidate_mapping=True,
+            )
+            store = LocalRunStore(tmpdir)
+            events = store.load_run_change_events_json("registry-new")["events"]
+            _status, health_body, _ = build_api_payload("/api/source-health", store)
+        categories = {category for event in events for category in event.get("change_categories", [])}
+        self.assertEqual("SUCCESS_CHANGED", second.evaluation.status)
+        self.assertTrue(any(event["program"].get("public_funding_number") == "80130001" for event in events))
+        self.assertIn("document-update", categories)
+        self.assertIn("artifact-type:schema", categories)
+        health = json.loads(health_body)
+        self.assertIn("official-materials", health["source_groups"])
+        self.assertTrue(any(source.get("notify_policy") == "always" for source in health["sources"]))
+
     def test_api_payloads_expose_runs_changes_and_source_health(self):
         specs_old = load_specs(FIXTURES / "local_run_spec_old.json")
         specs_new = load_specs(FIXTURES / "local_run_spec_new.json")
@@ -133,6 +168,52 @@ class ProductSliceTest(unittest.TestCase):
         self.assertTrue(payload["change_events_path"].endswith("change-events.json"))
         self.assertGreaterEqual(payload["change_event_count"], 1)
 
+
+    def test_run_official_local_cli_uses_source_registry(self):
+        env = os.environ.copy()
+        env["PYTHONPATH"] = "crawler"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "chitan_watch.cli",
+                    "run-official-local",
+                    "--source-registry",
+                    "crawler/chitan_watch/source_registry.json",
+                    "--store-dir",
+                    tmpdir,
+                    "--source-id",
+                    "chitan-watch",
+                    "--seed-html-file",
+                    "tests/fixtures/ssk_hub.html",
+                    "--source-map-file",
+                    "tests/fixtures/live_source_map_old.json",
+                    "--run-id",
+                    "cli-registry",
+                    "--generated-at",
+                    "2026-08-09T00:00:00+00:00",
+                    "--previous",
+                    "none",
+                    "--allow-candidate-mapping",
+                ],
+                cwd=ROOT,
+                env=env,
+                check=True,
+                text=True,
+                capture_output=True,
+            )
+        payload = json.loads(result.stdout)
+        self.assertEqual("cli-registry", payload["run_id"])
+        self.assertEqual("chitan-watch", payload["source_id"])
+        self.assertGreaterEqual(payload["evaluation"]["artifact_count"], 8)
+
+    def test_publish_workflow_uses_source_registry_not_single_csv_filter(self):
+        workflow = (ROOT / ".github/workflows/publish-static.yml").read_text(encoding="utf-8")
+        self.assertIn("--source-registry crawler/chitan_watch/source_registry.json", workflow)
+        self.assertIn("--source-id chitan-watch", workflow)
+        self.assertNotIn("--artifact-type master_csv", workflow)
+
     def test_web_app_contains_api_fallback_and_product_routes(self):
         app_js = (ROOT / "apps/web/app.js").read_text(encoding="utf-8")
         self.assertIn('/api/changes', app_js)
@@ -146,7 +227,10 @@ class ProductSliceTest(unittest.TestCase):
         self.assertIn('地単公費マスターとは', app_js)
         self.assertIn('行データの見方', app_js)
         self.assertIn('Chitan Watch の設計', app_js)
+        self.assertIn('現在の監視範囲', app_js)
+        self.assertIn('Source Registry', app_js)
         self.assertIn('データの構造', app_js)
+        self.assertIn('notify_policy', app_js)
         self.assertIn('外部 LLM に判断を任せていません', app_js)
         self.assertIn('公費負担者番号だけで', app_js)
         self.assertIn('再通知と実変更', app_js)
