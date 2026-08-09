@@ -9,9 +9,9 @@ import tempfile
 import unittest
 
 from chitan_watch.api import build_api_payload
-from chitan_watch.change_events import build_change_event_bundle
+from chitan_watch.change_events import build_change_event_bundle, event_in_current_notification_scope
 from chitan_watch.live_crawl import execute_live_local_run, execute_registry_local_run
-from chitan_watch.change_events import build_change_event_bundle
+from chitan_watch.change_events import build_change_event_bundle, event_in_current_notification_scope
 from chitan_watch.local_store import LocalRunStore, execute_local_run
 from chitan_watch.models import ArtifactType, CrawlerRunStatus
 from chitan_watch.run_state import ArtifactRunChange, CrawlerRunEvaluation, load_specs
@@ -76,7 +76,7 @@ class ProductSliceTest(unittest.TestCase):
         self.assertGreaterEqual(first.change_event_count, 1)
 
 
-    def test_legacy_scope_removed_artifacts_do_not_emit_feed_events(self):
+    def test_legacy_scope_artifacts_do_not_emit_feed_events(self):
         run = CrawlerRunEvaluation(
             status=CrawlerRunStatus.SUCCESS_CHANGED,
             source_id="chitan-watch",
@@ -93,6 +93,19 @@ class ProductSliceTest(unittest.TestCase):
                     canonical_url="https://www.digital.go.jp/policies/health/public-medical-hub",
                     state="removed",
                     previous_sha256="old",
+                    source_group="pmh-online-qualification",
+                    source_layer="pmh-online-qualification",
+                    source_owner="digital-agency",
+                    notify_policy="important_only",
+                    review_policy="conditional",
+                ),
+                ArtifactRunChange(
+                    artifact_id="legacy-pmh-added",
+                    artifact_type=ArtifactType.HTML,
+                    title="旧 PMH 追加通知",
+                    canonical_url="https://www.digital.go.jp/policies/health/public-medical-hub",
+                    state="added",
+                    current_sha256="new",
                     source_group="pmh-online-qualification",
                     source_layer="pmh-online-qualification",
                     source_owner="digital-agency",
@@ -120,6 +133,22 @@ class ProductSliceTest(unittest.TestCase):
         self.assertEqual("5_FAQ", events[0].program["name"])
         self.assertIn("source-layer:master-registration-operation", categories)
         self.assertNotIn("source-layer:pmh-online-qualification", categories)
+
+    def test_current_scope_filter_removes_legacy_historical_events(self):
+        legacy_event = {
+            "id": "legacy",
+            "change_categories": ["artifact-added", "source-layer:pmh-online-qualification"],
+            "source_context": {"source_layer": "pmh-online-qualification"},
+        }
+        current_event = {
+            "id": "current",
+            "change_categories": ["artifact-added", "source-layer:policy-faq"],
+            "source_context": {"source_layer": "policy-faq"},
+        }
+        master_row_event = {"id": "master-row", "change_categories": ["master-row-modified"]}
+        self.assertFalse(event_in_current_notification_scope(legacy_event))
+        self.assertTrue(event_in_current_notification_scope(current_event))
+        self.assertTrue(event_in_current_notification_scope(master_row_event))
 
     def test_registry_backed_run_emits_master_and_document_events(self):
         with tempfile.TemporaryDirectory() as tmpdir:

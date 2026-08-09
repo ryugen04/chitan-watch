@@ -283,6 +283,22 @@ def _source_owner_label(value: str | None) -> str:
     return SOURCE_OWNER_LABELS.get(value or "", value or "公式ソース")
 
 
+def event_in_current_notification_scope(event: dict[str, Any]) -> bool:
+    layers: set[str] = set()
+    source_context = event.get("source_context") if isinstance(event.get("source_context"), dict) else {}
+    if source_context.get("source_layer"):
+        layers.add(str(source_context["source_layer"]))
+    for category in event.get("change_categories") or ():
+        category_text = str(category)
+        if category_text.startswith("source-layer:"):
+            layers.add(category_text.removeprefix("source-layer:"))
+    return not layers or all(layer in CURRENT_NOTIFICATION_SOURCE_LAYERS for layer in layers)
+
+
+def _artifact_change_in_current_notification_scope(change: ArtifactRunChange) -> bool:
+    return not change.source_layer or change.source_layer in CURRENT_NOTIFICATION_SOURCE_LAYERS
+
+
 def _source_context(change: ArtifactRunChange) -> dict[str, str]:
     return {
         key: value
@@ -482,7 +498,7 @@ def build_change_event_bundle(run_id: str, run: CrawlerRunEvaluation) -> ChangeE
             continue
         if change.notify_policy in {"health_only", "never"} and change.state != "failed":
             continue
-        if change.state == "removed" and change.source_layer not in CURRENT_NOTIFICATION_SOURCE_LAYERS:
+        if not _artifact_change_in_current_notification_scope(change):
             continue
         if master_diff_has_events and change.artifact_type == ArtifactType.MASTER_CSV and change.state == "changed":
             continue

@@ -10,6 +10,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from .change_events import event_in_current_notification_scope
 from .local_store import DEFAULT_STORE_DIR, LocalRunStore
 from .rss import RssFeedOptions, event_with_interpretation, rss_xml_from_store
 
@@ -52,6 +53,8 @@ def _event_items(store: LocalRunStore) -> list[dict]:
     for run_id in _sorted_run_ids(store):
         bundle = store.load_run_change_events_json(run_id)
         for event in bundle.get("events", []):
+            if not event_in_current_notification_scope(event):
+                continue
             item = event_with_interpretation(event)
             item["run_id"] = run_id
             events.append(item)

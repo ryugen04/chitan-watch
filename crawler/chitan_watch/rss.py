@@ -8,6 +8,7 @@ from typing import Iterable
 from urllib.parse import quote
 from xml.etree import ElementTree as ET
 
+from .change_events import event_in_current_notification_scope
 from .local_store import DEFAULT_STORE_DIR, LocalRunStore
 
 DEFAULT_FEED_TITLE = "Chitan Watch Changes"
@@ -237,7 +238,7 @@ def _replay_latest_event(events: list[dict], options: RssFeedOptions) -> list[di
 
 
 def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFeedOptions()) -> str:
-    event_items = _replay_latest_event([dict(event) for event in events], options)
+    event_items = _replay_latest_event([dict(event) for event in events if event_in_current_notification_scope(dict(event))], options)
     sorted_events = sorted(event_items, key=_event_sort_key, reverse=True)[: options.max_items]
     rss = ET.Element("rss", {"version": "2.0"})
     channel = ET.SubElement(rss, "channel")
