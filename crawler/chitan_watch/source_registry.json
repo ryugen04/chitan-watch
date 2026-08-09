@@ -212,6 +212,69 @@
       "evidence_level": "INFERRED",
       "freshness_sla": "daily",
       "direct": true
+    },
+    {
+      "id": "sapporo-child-medical-subsidy-seed",
+      "title": "札幌市 子ども医療費助成",
+      "seed_url": "https://www.city.sapporo.jp/hoken-iryo/iryojosei/nyuyoji.html",
+      "source_id": "municipality-policy-seed",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "municipality-policy-seed",
+      "source_layer": "municipality-policy-seed",
+      "source_owner": "municipality",
+      "source_role": "local-benefit-rule-context",
+      "jurisdiction_scope": "local",
+      "monitor_mode": "source_health",
+      "notify_policy": "health_only",
+      "review_policy": "none",
+      "evidence_level": "INFERRED",
+      "freshness_sla": "weekly",
+      "direct": true
+    },
+    {
+      "id": "yokohama-child-medical-subsidy-seed",
+      "title": "横浜市 小児医療費助成",
+      "seed_url": "https://www.city.yokohama.lg.jp/kenko-iryo-fukushi/kenko-iryo/iryohijosei/shoni/child.html",
+      "source_id": "municipality-policy-seed",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "municipality-policy-seed",
+      "source_layer": "municipality-policy-seed",
+      "source_owner": "municipality",
+      "source_role": "local-benefit-rule-context",
+      "jurisdiction_scope": "local",
+      "monitor_mode": "source_health",
+      "notify_policy": "health_only",
+      "review_policy": "none",
+      "evidence_level": "INFERRED",
+      "freshness_sla": "weekly",
+      "direct": true
+    },
+    {
+      "id": "sumida-child-medical-subsidy-seed",
+      "title": "墨田区 子どもの医療費の助成",
+      "seed_url": "https://www.city.sumida.lg.jp/kosodate_kyouiku/kosodate_site/teate_jyosei_shien/teate_zyosei/jyosei/nyuuyouji_iryouhi.html",
+      "source_id": "municipality-policy-seed",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "municipality-policy-seed",
+      "source_layer": "municipality-policy-seed",
+      "source_owner": "municipality",
+      "source_role": "local-benefit-rule-context",
+      "jurisdiction_scope": "local",
+      "monitor_mode": "source_health",
+      "notify_policy": "health_only",
+      "review_policy": "none",
+      "evidence_level": "INFERRED",
+      "freshness_sla": "weekly",
+      "direct": true
     }
   ]
 }

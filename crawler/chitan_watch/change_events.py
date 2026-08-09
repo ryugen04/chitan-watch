@@ -247,6 +247,7 @@ SOURCE_LAYER_LABELS = {
     "policy-faq": "制度背景・説明会・FAQ",
     "reference-portal": "公費負担医療制度マスター入口",
     "site-news-health": "公式サイト更新情報の補助確認",
+    "municipality-policy-seed": "自治体制度ページ seed",
     "policy-context": "制度・政策文脈",
     "pmh-online-qualification": "PMH/オンライン資格確認",
     "master-publication": "地単公費マスター公開",
@@ -332,6 +333,8 @@ def _artifact_likely_impact(change: ArtifactRunChange) -> tuple[str, ...]:
         return ("診療報酬情報提供サービス側の公費負担医療制度マスター入口や、支払基金ページへの導線が変わった可能性があります。",)
     if layer == "site-news-health":
         return ("支払基金トップ更新情報の補助確認です。本命は titansys ページ側で、トップ掲載有無だけでは更新有無を確定しません。",)
+    if layer == "municipality-policy-seed":
+        return ("自治体個別制度の文脈確認用 seed です。RSS 通知ではなく Source Health で取得状態を確認し、マスター掲載内容の補助理解に使います。",)
     if layer == "pmh-online-qualification":
         return ("マイナンバーカードによる医療費助成資格確認、PMH 参加自治体、制度関連マスタ、医療機関導入状況の確認が必要な可能性があります。",)
     if layer == "municipality-policy":

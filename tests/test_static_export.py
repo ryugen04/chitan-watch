@@ -106,6 +106,7 @@ class StaticExportTest(unittest.TestCase):
         self.assertIn("まず見るページ", app_js)
         self.assertIn("地単公費マスターの対象", app_js)
         self.assertIn("償還払い制度はこのマスターには含まれません", app_js)
+        self.assertIn("自治体 seed の扱い", app_js)
         self.assertIn("公開 CSV をそのまま本番反映するのではなく", app_js)
 
 

@@ -146,7 +146,13 @@ class ProductSliceTest(unittest.TestCase):
             "source_context": {"source_layer": "policy-faq"},
         }
         master_row_event = {"id": "master-row", "change_categories": ["master-row-modified"]}
+        municipality_seed_event = {
+            "id": "municipality-seed",
+            "change_categories": ["artifact-added", "source-layer:municipality-policy-seed"],
+            "source_context": {"source_layer": "municipality-policy-seed"},
+        }
         self.assertFalse(event_in_current_notification_scope(legacy_event))
+        self.assertFalse(event_in_current_notification_scope(municipality_seed_event))
         self.assertTrue(event_in_current_notification_scope(current_event))
         self.assertTrue(event_in_current_notification_scope(master_row_event))
 
@@ -185,9 +191,12 @@ class ProductSliceTest(unittest.TestCase):
         self.assertIn("master-registration-operation", health["source_layers"])
         self.assertIn("policy-faq", health["source_layers"])
         self.assertIn("reference-portal", health["source_layers"])
+        self.assertIn("municipality-policy-seed", health["source_layers"])
         self.assertFalse(any(source.get("source_owner") == "digital-agency" for source in health["sources"]))
         self.assertFalse(any(source.get("source_layer") == "municipality-policy" for source in health["sources"]))
+        self.assertTrue(any(source.get("source_layer") == "municipality-policy-seed" and source.get("notify_policy") == "health_only" for source in health["sources"]))
         self.assertTrue(any(source.get("notify_policy") == "always" for source in health["sources"]))
+        self.assertFalse(any("source-layer:municipality-policy-seed" in event.get("change_categories", []) for event in events))
 
     def test_api_payloads_expose_runs_changes_and_source_health(self):
         specs_old = load_specs(FIXTURES / "local_run_spec_old.json")
@@ -313,9 +322,11 @@ class ProductSliceTest(unittest.TestCase):
         self.assertIn('master-latest-data', app_js)
         self.assertIn('master-registration-operation', app_js)
         self.assertIn('policy-faq', app_js)
+        self.assertIn('municipality-policy-seed', app_js)
+        self.assertIn('Source Health にだけ出します', app_js)
         self.assertIn('償還払い制度はこのマスターには含まれません', app_js)
         self.assertIn('同値性テスト', app_js)
-        self.assertIn('今は見ないもの', app_js)
+        self.assertIn('自治体 seed の扱い', app_js)
         self.assertIn('notify_policy', app_js)
         self.assertIn('source_layer', app_js)
         self.assertIn('source_owner', app_js)
