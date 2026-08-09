@@ -2,6 +2,12 @@ name: Publish static Chitan Watch feed
 
 on:
   workflow_dispatch:
+    inputs:
+      replay_latest_rss_item:
+        description: "Replay the latest real change event as a labeled RSS item"
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "17 21 * * *"
 
@@ -57,8 +63,21 @@ jobs:
       - name: Export static site
         env:
           PYTHONPATH: crawler
+          REPLAY_LATEST_RSS_ITEM: ${{ inputs.replay_latest_rss_item || false }}
+        shell: bash
         run: |
-          python3 -m chitan_watch.cli export-static             --store-dir storage/chitan-watch             --output-dir public             --web-dir apps/web             --site-url "${{ steps.site.outputs.url }}"
+          replay_args=()
+          if [ "${REPLAY_LATEST_RSS_ITEM}" = "true" ]; then
+            replay_args+=(--replay-latest-rss-item)
+            replay_args+=(--rss-replay-nonce "run-${GITHUB_RUN_ID}")
+            replay_args+=(--rss-replay-detected-at "$(date -u +'%Y-%m-%dT%H:%M:%S+00:00')")
+          fi
+          python3 -m chitan_watch.cli export-static \
+            --store-dir storage/chitan-watch \
+            --output-dir public \
+            --web-dir apps/web \
+            --site-url "${{ steps.site.outputs.url }}" \
+            "${replay_args[@]}"
 
       - name: Save crawler state cache
         uses: actions/cache/save@v4

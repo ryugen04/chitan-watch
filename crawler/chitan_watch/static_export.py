@@ -49,6 +49,9 @@ def export_static_site(
     web_dir: str | Path = DEFAULT_WEB_DIR,
     site_url: str = "http://127.0.0.1:8765",
     max_rss_items: int = 50,
+    replay_latest_rss_item: bool = False,
+    rss_replay_nonce: str | None = None,
+    rss_replay_detected_at: str | None = None,
 ) -> StaticExportResult:
     store = LocalRunStore(store_dir)
     output = Path(output_dir)
@@ -58,7 +61,16 @@ def export_static_site(
     output.mkdir(parents=True, exist_ok=True)
 
     written = _copy_web_assets(web, output)
-    rss_xml = rss_xml_from_store(store, options=RssFeedOptions(site_url=site_url, max_items=max_rss_items))
+    rss_xml = rss_xml_from_store(
+        store,
+        options=RssFeedOptions(
+            site_url=site_url,
+            max_items=max_rss_items,
+            replay_latest_item=replay_latest_rss_item,
+            replay_nonce=rss_replay_nonce,
+            replay_detected_at=rss_replay_detected_at,
+        ),
+    )
     _write_text(output / "rss.xml", rss_xml)
     _write_text(output / "feeds" / "changes.xml", rss_xml)
     written.extend([output / "rss.xml", output / "feeds" / "changes.xml"])

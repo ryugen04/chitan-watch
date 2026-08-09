@@ -62,6 +62,31 @@ class StaticExportTest(unittest.TestCase):
             self.assertEqual("static-new", runs["runs"][0]["run_id"])
             self.assertEqual("static-new", source_health["latest_run_id"])
 
+
+    def test_export_static_site_can_replay_latest_real_rss_item(self):
+        with tempfile.TemporaryDirectory() as store_dir, tempfile.TemporaryDirectory() as output_dir:
+            self.build_store(store_dir)
+            export_static_site(
+                store_dir=store_dir,
+                output_dir=output_dir,
+                web_dir=ROOT / "apps/web",
+                site_url="https://example.test/chitan-watch",
+                max_rss_items=10,
+                replay_latest_rss_item=True,
+                rss_replay_nonce="manual-001",
+                rss_replay_detected_at="2026-08-09T01:00:00+00:00",
+            )
+            root = ET.fromstring((Path(output_dir) / "rss.xml").read_text(encoding="utf-8"))
+            items = root.findall("./channel/item")
+            self.assertGreaterEqual(len(items), 2)
+            replay = next(item for item in items if item.findtext("guid", "").endswith(":replay:manual-001"))
+            original_guid = replay.findtext("guid").removesuffix(":replay:manual-001")
+            original = next(item for item in items if item.findtext("guid") == original_guid)
+            self.assertIn("Manual delivery replay", replay.findtext("title"))
+            self.assertEqual(original.findtext("link"), replay.findtext("link"))
+            self.assertIn("Manual delivery replay", replay.findtext("description"))
+            self.assertIn("manual-replay", [node.text for node in replay.findall("category")])
+
     def test_web_app_references_static_json_fallback(self):
         app_js = (ROOT / "apps/web/app.js").read_text(encoding="utf-8")
         self.assertIn("static/runs.json", app_js)

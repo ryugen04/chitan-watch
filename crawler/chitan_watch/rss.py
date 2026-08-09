@@ -23,6 +23,10 @@ class RssFeedOptions:
     site_url: str = DEFAULT_SITE_URL
     feed_path: str = "/rss.xml"
     max_items: int = 50
+    replay_latest_item: bool = False
+    replay_nonce: str | None = None
+    replay_detected_at: str | None = None
+    replay_label: str = "Manual delivery replay"
 
 
 def _parse_datetime(value: str | None) -> datetime:
@@ -74,12 +78,16 @@ def _item_description(event: dict) -> str:
             evidence_lines.append(f"{field}: {before} -> {after} ({level})")
         else:
             evidence_lines.append(f"{field}: {item.get('description', '')} ({level})")
-    parts = [
+    replay_label = event.get("rss_replay_label")
+    parts = []
+    if replay_label:
+        parts.append(f"<p><strong>{escape(str(replay_label))}:</strong> Existing real detected data replayed for delivery verification.</p>")
+    parts.extend([
         f"<p>{escape(str(event.get('summary') or ''))}</p>",
         f"<p><strong>Severity:</strong> {escape(str(event.get('severity') or ''))}</p>",
         f"<p><strong>Categories:</strong> {escape(categories)}</p>",
         f"<p><strong>Vendor impacts:</strong> {escape(impacts)}</p>",
-    ]
+    ])
     if evidence_lines:
         parts.append("<ul>" + "".join(f"<li>{escape(line)}</li>" for line in evidence_lines) + "</ul>")
     if event.get("review_required"):
@@ -87,8 +95,25 @@ def _item_description(event: dict) -> str:
     return "".join(parts)
 
 
+
+def _replay_latest_event(events: list[dict], options: RssFeedOptions) -> list[dict]:
+    if not options.replay_latest_item or not events:
+        return events
+    latest = sorted(events, key=_event_sort_key, reverse=True)[0]
+    original_id = str(latest.get("id") or "change")
+    nonce = options.replay_nonce or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    replay = dict(latest)
+    replay["id"] = f"{original_id}:replay:{nonce}"
+    replay["rss_link_id"] = original_id
+    replay["detected_at"] = options.replay_detected_at or datetime.now(timezone.utc).isoformat()
+    replay["rss_replay_label"] = options.replay_label
+    replay["change_categories"] = tuple(latest.get("change_categories") or ()) + ("manual-replay",)
+    return [replay, *events]
+
+
 def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFeedOptions()) -> str:
-    sorted_events = sorted(events, key=_event_sort_key, reverse=True)[: options.max_items]
+    event_items = _replay_latest_event([dict(event) for event in events], options)
+    sorted_events = sorted(event_items, key=_event_sort_key, reverse=True)[: options.max_items]
     rss = ET.Element("rss", {"version": "2.0"})
     channel = ET.SubElement(rss, "channel")
     _text(channel, "title", options.title)
@@ -104,10 +129,13 @@ def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFee
         program = event.get("program") or {}
         jurisdiction = event.get("jurisdiction") or {}
         title = f"[{event.get('severity', 'INFO')}] {program.get('name') or '地単公費マスター'}"
+        if event.get("rss_replay_label"):
+            title = f"{event.get('rss_replay_label')}: {title}"
         place = "-".join(part for part in (jurisdiction.get("prefecture_code"), jurisdiction.get("municipality_code")) if part)
         if place:
             title = f"{title} / {place}"
-        link = _change_link(options.site_url, str(event.get("id") or "change"))
+        link_id = str(event.get("rss_link_id") or event.get("id") or "change")
+        link = _change_link(options.site_url, link_id)
         _text(item, "title", title)
         _text(item, "link", link)
         guid = _text(item, "guid", str(event.get("id") or link))

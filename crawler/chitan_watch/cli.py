@@ -145,6 +145,9 @@ def main() -> int:
     export_static_cmd.add_argument("--web-dir", default="apps/web")
     export_static_cmd.add_argument("--site-url", default="http://127.0.0.1:8765")
     export_static_cmd.add_argument("--max-rss-items", type=int, default=50)
+    export_static_cmd.add_argument("--replay-latest-rss-item", action="store_true", help="Add a labeled replay of the latest real change event to the RSS feed")
+    export_static_cmd.add_argument("--rss-replay-nonce", default=None, help="Stable nonce used in the replay RSS GUID")
+    export_static_cmd.add_argument("--rss-replay-detected-at", default=None, help="ISO datetime used as the replay RSS pubDate")
 
     args = parser.parse_args()
 
@@ -326,6 +329,9 @@ def main() -> int:
             web_dir=args.web_dir,
             site_url=args.site_url,
             max_rss_items=args.max_rss_items,
+            replay_latest_rss_item=args.replay_latest_rss_item,
+            rss_replay_nonce=args.rss_replay_nonce,
+            rss_replay_detected_at=args.rss_replay_detected_at,
         )
         print(json.dumps(result, default=encode, ensure_ascii=False, indent=2))
         return 0
