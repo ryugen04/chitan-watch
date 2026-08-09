@@ -115,9 +115,55 @@ def _event_action_sentence(event: dict) -> str:
     return "地単公費マスターに関する変更を検知しました。"
 
 
+def _fallback_headline(event: dict) -> str:
+    categories = set(event.get("change_categories") or ())
+    name = _program_name(event)
+    if "artifact-added" in categories:
+        return f"{name} を公開ファイルとして検知しました"
+    if "artifact-changed" in categories:
+        return f"{name} の公開ファイル更新を検知しました"
+    if "artifact-removed" in categories:
+        return f"{name} の公開ファイル削除を検知しました"
+    if any(str(category).startswith("master-row-") for category in categories):
+        return f"{name} のマスター差分を検知しました"
+    return f"{name} に関する変更を検知しました"
+
+
+def _fallback_likely_impact(event: dict) -> list[str]:
+    categories = set(event.get("change_categories") or ())
+    if "artifact-removed" in categories:
+        return ["参照している公式ファイル URL や取得処理の確認が必要な可能性があります。"]
+    if "artifact-added" in categories or "artifact-changed" in categories:
+        return ["レセコン・請求システムの地単公費マスター取り込み対象か確認が必要な可能性があります。"]
+    if any(str(category).startswith("master-row-") for category in categories):
+        return ["レセコン・請求システムの地単公費マスター更新確認が必要な可能性があります。"]
+    return []
+
+
+def _fallback_interpretation(event: dict) -> dict:
+    evidence_levels = [item.get("evidence_level") for item in event.get("evidence") or [] if isinstance(item, dict) and item.get("evidence_level")]
+    confidence = "UNRESOLVED" if event.get("review_required") else (evidence_levels[0] if evidence_levels else "CONFIRMED")
+    return {
+        "headline": _fallback_headline(event),
+        "summary": _event_action_sentence(event),
+        "likely_impact": _fallback_likely_impact(event),
+        "recommended_action": "詳細ページで検知内容と公式ソースを確認し、必要に応じてマスター更新作業に進んでください。",
+        "confidence": confidence,
+        "evidence_level": confidence,
+        "generated_by": "deterministic-fallback",
+        "needs_review": bool(event.get("review_required")),
+    }
+
+
 def _interpretation(event: dict) -> dict:
     raw = event.get("interpretation")
-    return raw if isinstance(raw, dict) else {}
+    return raw if isinstance(raw, dict) else _fallback_interpretation(event)
+
+
+def event_with_interpretation(event: dict) -> dict:
+    item = dict(event)
+    item["interpretation"] = _interpretation(item)
+    return item
 
 
 def _headline(event: dict) -> str:
@@ -222,7 +268,7 @@ def rss_xml_from_store(store: LocalRunStore, options: RssFeedOptions = RssFeedOp
     for run_id in reversed(store.list_run_ids()):
         bundle = store.load_run_change_events_json(run_id)
         for event in bundle.get("events", []):
-            item = dict(event)
+            item = event_with_interpretation(event)
             item["run_id"] = run_id
             events.append(item)
     return rss_xml_from_events(events, options=options)

@@ -11,7 +11,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 from .local_store import DEFAULT_STORE_DIR, LocalRunStore
-from .rss import RssFeedOptions, rss_xml_from_store
+from .rss import RssFeedOptions, event_with_interpretation, rss_xml_from_store
 
 DEFAULT_WEB_DIR = Path(__file__).resolve().parents[2] / "apps" / "web"
 
@@ -52,7 +52,7 @@ def _event_items(store: LocalRunStore) -> list[dict]:
     for run_id in _sorted_run_ids(store):
         bundle = store.load_run_change_events_json(run_id)
         for event in bundle.get("events", []):
-            item = dict(event)
+            item = event_with_interpretation(event)
             item["run_id"] = run_id
             events.append(item)
     return events
