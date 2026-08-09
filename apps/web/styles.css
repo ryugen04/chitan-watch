@@ -70,6 +70,10 @@ h1 { margin: 0; font-size: 30px; letter-spacing: 0; }
 .card h2 a { color: inherit; text-decoration: none; }
 .card h2 a:hover { color: var(--accent); }
 .card p { line-height: 1.5; }
+.lead { font-size: 16px; line-height: 1.6; }
+.action-line { color: var(--ink); line-height: 1.55; }
+.interpretation-block { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 12px 0; margin: 14px 0; }
+.interpretation-block ul { margin: 8px 0 10px; padding-left: 20px; line-height: 1.55; }
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .meta { color: var(--muted); font-size: 13px; }
 .severity, .review-badge, .tags span, .source-state {

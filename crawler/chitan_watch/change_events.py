@@ -23,6 +23,18 @@ class ChangeEvidence:
 
 
 @dataclass(frozen=True)
+class ChangeInterpretation:
+    headline: str
+    summary: str
+    likely_impact: tuple[str, ...]
+    recommended_action: str
+    confidence: EvidenceLevel
+    evidence_level: EvidenceLevel
+    generated_by: str = "deterministic"
+    needs_review: bool = False
+
+
+@dataclass(frozen=True)
 class ChangeEventCandidate:
     id: str
     jurisdiction: dict[str, str]
@@ -35,6 +47,7 @@ class ChangeEventCandidate:
     vendor_impacts: tuple[str, ...]
     evidence: tuple[ChangeEvidence, ...]
     source_run_status: CrawlerRunStatus
+    interpretation: ChangeInterpretation
     review_required: bool = False
 
 
@@ -132,6 +145,114 @@ def _impacts_for(change: MasterRowChange, severity: Severity) -> tuple[str, ...]
     return tuple(dict.fromkeys(impacts))
 
 
+def _place_label(identity: dict[str, str]) -> str:
+    prefecture = identity.get("prefecture_code") or "都道府県未特定"
+    municipality = identity.get("municipality_code") or ""
+    return f"{prefecture}-{municipality}" if municipality else prefecture
+
+
+def _evidence_level(evidence: tuple[ChangeEvidence, ...]) -> EvidenceLevel:
+    if not evidence:
+        return EvidenceLevel.UNRESOLVED
+    levels = {item.evidence_level for item in evidence}
+    if EvidenceLevel.UNRESOLVED in levels:
+        return EvidenceLevel.UNRESOLVED
+    if EvidenceLevel.INFERRED in levels:
+        return EvidenceLevel.INFERRED
+    if EvidenceLevel.CORROBORATED in levels:
+        return EvidenceLevel.CORROBORATED
+    return EvidenceLevel.CONFIRMED
+
+
+def _row_change_label(change_type: str) -> str:
+    return {
+        "row_added": "追加",
+        "row_removed": "削除",
+        "row_modified": "変更",
+        "row_ambiguous": "要確認の差分",
+    }.get(change_type, "変更")
+
+
+def _field_labels(fields: dict[str, dict[str, Any]]) -> tuple[str, ...]:
+    labels = {
+        "item_1": "制度名",
+        "item_8": "公費負担者番号",
+        "item_9": "制度区分",
+        "item_10": "開始日",
+        "item_11": "終了日",
+    }
+    values = [labels.get(field, "その他項目") for field in sorted(fields)]
+    return tuple(dict.fromkeys(values))
+
+
+def interpretation_for_master_change(
+    change: MasterRowChange,
+    program: dict[str, str],
+    effective_from: str | None,
+    severity: Severity,
+    evidence: tuple[ChangeEvidence, ...],
+) -> ChangeInterpretation:
+    place = _place_label(change.identity)
+    program_name = program.get("name") or "地単公費マスター"
+    change_label = _row_change_label(change.type)
+    fields = _field_labels(change.fields)
+    field_text = "、".join(fields) if fields else "行全体"
+    if change.type == "row_ambiguous":
+        return ChangeInterpretation(
+            headline=f"{place} の {program_name} に確認が必要な差分があります",
+            summary="同じ業務キーに複数候補があり、システムだけでは変更前後の対応を安全に確定できません。",
+            likely_impact=("自動取り込み前に担当者レビューが必要です。", "マスター更新の判断を保留してください。"),
+            recommended_action="詳細画面で候補行と公式ソースを確認し、対応関係を人手で確定してください。",
+            confidence=EvidenceLevel.UNRESOLVED,
+            evidence_level=_evidence_level(evidence),
+            needs_review=True,
+        )
+    impact = ["レセコン・請求システムの地単公費マスター更新確認が必要な可能性があります。"]
+    if severity in {Severity.HIGH, Severity.CRITICAL}:
+        impact.append("資格確認、患者登録、請求判定に影響する可能性があります。")
+    elif change.type in {"row_added", "row_removed"}:
+        impact.append("対象制度の有効/無効扱いを運用前に確認してください。")
+    if effective_from:
+        impact.append(f"施行日または適用開始日は {effective_from} として検知されています。")
+    return ChangeInterpretation(
+        headline=f"{place} の {program_name} が{change_label}されています",
+        summary=f"公式マスターの{field_text}に{change_label}を検知しました。",
+        likely_impact=tuple(impact),
+        recommended_action="公式ソースの詳細と差分項目を確認し、利用中のマスター更新手順に沿って反映可否を判断してください。",
+        confidence=EvidenceLevel.CONFIRMED,
+        evidence_level=_evidence_level(evidence),
+        needs_review=False,
+    )
+
+
+def interpretation_for_artifact_change(change: ArtifactRunChange, evidence: tuple[ChangeEvidence, ...], severity: Severity) -> ChangeInterpretation:
+    action = {
+        "added": "公開ファイルを検知しました",
+        "changed": "公開ファイルの更新を検知しました",
+        "removed": "公開ファイルの削除を検知しました",
+        "failed": "公開ファイルの確認に失敗しました",
+    }.get(change.state, f"公開ファイルの状態を検知しました（{change.state}）")
+    if change.state == "failed":
+        return ChangeInterpretation(
+            headline=f"{change.title} の取得確認に失敗しました",
+            summary="公式ソースの取得または検証でエラーが発生しました。監視状態の確認が必要です。",
+            likely_impact=("この回の変更有無は確定できません。", "通知や自動更新判断を保留してください。"),
+            recommended_action="公式ページへのアクセス可否とワークフローログを確認してください。",
+            confidence=EvidenceLevel.UNRESOLVED,
+            evidence_level=_evidence_level(evidence),
+            needs_review=True,
+        )
+    return ChangeInterpretation(
+        headline=f"{change.title} の{action}",
+        summary="社会保険診療報酬支払基金の公開資料として監視対象に記録されています。",
+        likely_impact=("地単公費マスター取り込み対象の確認が必要な可能性があります。",),
+        recommended_action="詳細ページから公式ソースと検知内容を確認し、必要に応じてマスター更新作業に進んでください。",
+        confidence=EvidenceLevel.CONFIRMED,
+        evidence_level=_evidence_level(evidence),
+        needs_review=False,
+    )
+
+
 def event_from_master_change(run: CrawlerRunEvaluation, change: MasterRowChange, source_url: str, snapshot_id: str | None) -> ChangeEventCandidate:
     side = "after" if change.type != "row_removed" else "before"
     severity = _severity_for_row_change(change)
@@ -160,6 +281,7 @@ def event_from_master_change(run: CrawlerRunEvaluation, change: MasterRowChange,
     program = _program(change.identity, change.fields, side)
     effective_from = _value(change.fields, "item_10", "after") or _value(change.fields, "item_10", side)
     summary = f"{program['name']} の地単公費マスター差分: {change.type}"
+    interpretation = interpretation_for_master_change(change, program, effective_from, severity, evidence)
     return ChangeEventCandidate(
         id=_stable_id("chg", {"type": change.type, "identity": change.identity, "before": change.before_row_hash, "after": change.after_row_hash}),
         jurisdiction=_identity_jurisdiction(change.identity),
@@ -172,6 +294,7 @@ def event_from_master_change(run: CrawlerRunEvaluation, change: MasterRowChange,
         vendor_impacts=_impacts_for(change, severity),
         evidence=evidence,
         source_run_status=run.status,
+        interpretation=interpretation,
         review_required=change.type == "row_ambiguous",
     )
 
@@ -181,6 +304,18 @@ def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunCha
     if change.state == "failed":
         severity = Severity.HIGH
     summary = f"Artifact {change.title} is {change.state}"
+    evidence = (
+        ChangeEvidence(
+            type="artifact_snapshot",
+            evidence_level=EvidenceLevel.CONFIRMED if change.state != "failed" else EvidenceLevel.UNRESOLVED,
+            source_url=change.canonical_url,
+            snapshot_id=change.current_snapshot_id,
+            description=change.error or f"Artifact state is {change.state}",
+            before=change.previous_sha256,
+            after=change.current_sha256,
+        ),
+    )
+    interpretation = interpretation_for_artifact_change(change, evidence, severity)
     return ChangeEventCandidate(
         id=_stable_id("chg", {"artifact_id": change.artifact_id, "state": change.state, "sha": change.current_sha256, "error": change.error}),
         jurisdiction={"prefecture_code": "", "municipality_code": ""},
@@ -191,18 +326,9 @@ def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunCha
         change_categories=(f"artifact-{change.state}",),
         summary=summary,
         vendor_impacts=("source-monitoring",) if change.state == "failed" else ("master-import",),
-        evidence=(
-            ChangeEvidence(
-                type="artifact_snapshot",
-                evidence_level=EvidenceLevel.CONFIRMED if change.state != "failed" else EvidenceLevel.UNRESOLVED,
-                source_url=change.canonical_url,
-                snapshot_id=change.current_snapshot_id,
-                description=change.error or f"Artifact state is {change.state}",
-                before=change.previous_sha256,
-                after=change.current_sha256,
-            ),
-        ),
+        evidence=evidence,
         source_run_status=run.status,
+        interpretation=interpretation,
         review_required=change.state == "failed",
     )
 

@@ -32,6 +32,11 @@ class ProductSliceTest(unittest.TestCase):
         self.assertGreaterEqual(len(bundle.events), 1)
         self.assertTrue(any(event.program["public_funding_number"] == "80130001" for event in bundle.events))
         self.assertTrue(any(evidence.type == "master_field_diff" for event in bundle.events for evidence in event.evidence))
+        interpreted = next(event for event in bundle.events if event.interpretation.generated_by == "deterministic")
+        self.assertTrue(interpreted.interpretation.headline)
+        self.assertTrue(interpreted.interpretation.summary)
+        self.assertGreaterEqual(len(interpreted.interpretation.likely_impact), 1)
+        self.assertIn("公式ソース", interpreted.interpretation.recommended_action)
 
     def test_fixture_backed_live_local_run_discovers_and_persists_events(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -83,7 +88,11 @@ class ProductSliceTest(unittest.TestCase):
         self.assertEqual(200, changes_status)
         self.assertEqual(200, health_status)
         self.assertEqual("run-new", json.loads(runs_body)["runs"][0]["run_id"])
-        self.assertGreaterEqual(len(json.loads(changes_body)["changes"]), 1)
+        changes = json.loads(changes_body)["changes"]
+        self.assertGreaterEqual(len(changes), 1)
+        self.assertIn("interpretation", changes[0])
+        self.assertIn("recommended_action", changes[0]["interpretation"])
+        self.assertEqual("deterministic", changes[0]["interpretation"]["generated_by"])
         self.assertEqual("run-new", json.loads(health_body)["latest_run_id"])
 
     def test_run_official_local_cli_smoke(self):
@@ -128,6 +137,9 @@ class ProductSliceTest(unittest.TestCase):
         app_js = (ROOT / "apps/web/app.js").read_text(encoding="utf-8")
         self.assertIn('/api/changes', app_js)
         self.assertIn('Fixture fallback', app_js)
+        self.assertIn('function interpretation(change)', app_js)
+        self.assertIn('推奨対応:', app_js)
+        self.assertIn('解釈', app_js)
         self.assertIn('renderSources', app_js)
         self.assertIn('change-detail', app_js)
 

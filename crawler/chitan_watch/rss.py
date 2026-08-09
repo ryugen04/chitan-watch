@@ -115,8 +115,19 @@ def _event_action_sentence(event: dict) -> str:
     return "地単公費マスターに関する変更を検知しました。"
 
 
+def _interpretation(event: dict) -> dict:
+    raw = event.get("interpretation")
+    return raw if isinstance(raw, dict) else {}
+
+
+def _headline(event: dict) -> str:
+    interpretation = _interpretation(event)
+    return str(interpretation.get("headline") or _event_action_sentence(event))
+
+
 def _item_description(event: dict, detail_link: str) -> str:
     categories = [label for category in event.get("change_categories") or () if (label := _category_label(category))]
+    interpretation = _interpretation(event)
     replay_label = event.get("rss_replay_label")
     lines = []
     if replay_label:
@@ -124,8 +135,12 @@ def _item_description(event: dict, detail_link: str) -> str:
             "これは通知動作確認のための再通知です。新しい変更を検知した通知ではありません。",
             "元になっている実データは、過去に検知済みの公式ソース由来の項目です。",
         ])
-    else:
-        lines.append(_event_action_sentence(event))
+    lines.append(str(interpretation.get("summary") or _event_action_sentence(event)))
+    impacts = [str(item) for item in interpretation.get("likely_impact") or () if item]
+    if impacts:
+        lines.append("想定影響: " + " / ".join(impacts))
+    if interpretation.get("recommended_action"):
+        lines.append(f"推奨対応: {interpretation.get('recommended_action')}")
     lines.extend([
         f"対象: {_program_name(event)}",
         f"重要度: {_severity_label(event.get('severity'))}",
@@ -133,9 +148,12 @@ def _item_description(event: dict, detail_link: str) -> str:
     ])
     if event.get("effective_from"):
         lines.append(f"施行日: {event.get('effective_from')}")
+    confidence = interpretation.get("confidence") or interpretation.get("evidence_level")
+    if confidence:
+        lines.append(f"確度: {confidence}")
     if categories:
         lines.append(f"分類: {'、'.join(categories)}")
-    if event.get("review_required"):
+    if event.get("review_required") or interpretation.get("needs_review"):
         lines.append("確認: 管理者レビューが必要です。")
     lines.extend([
         f"詳細: {detail_link}",
@@ -176,9 +194,9 @@ def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFee
         item = ET.SubElement(channel, "item")
         program = event.get("program") or {}
         jurisdiction = event.get("jurisdiction") or {}
-        title = f"【地単公費マスター更新】{program.get('name') or '地単公費マスター'}"
+        title = f"【地単公費マスター更新】{_headline(event)}"
         if event.get("rss_replay_label"):
-            title = f"【再通知】{program.get('name') or '地単公費マスター'}"
+            title = f"【再通知】{_headline(event)}"
         place = "-".join(part for part in (jurisdiction.get("prefecture_code"), jurisdiction.get("municipality_code")) if part)
         if place:
             title = f"{title} / {place}"

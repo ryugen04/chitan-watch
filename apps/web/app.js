@@ -116,6 +116,30 @@ function latestRun() {
   return state.runs[0] ?? null;
 }
 
+function interpretation(change) {
+  return change.interpretation ?? {};
+}
+
+function headline(change) {
+  return interpretation(change).headline || change.summary || change.program?.name || "地単公費マスターの変更";
+}
+
+function interpSummary(change) {
+  return interpretation(change).summary || change.summary || "検知内容を確認してください。";
+}
+
+function recommendedAction(change) {
+  return interpretation(change).recommended_action || "詳細と公式ソースを確認してください。";
+}
+
+function confidence(change) {
+  return interpretation(change).confidence || interpretation(change).evidence_level || "UNRESOLVED";
+}
+
+function impactList(change) {
+  return interpretation(change).likely_impact ?? [];
+}
+
 function kpis() {
   const run = latestRun();
   const reviewCount = state.changes.filter(change => change.review_required).length;
@@ -130,9 +154,10 @@ function kpis() {
 function renderChanges() {
   const rows = state.changes.map(change => `<article class="card change-card">
     <div class="card-top"><span class="severity ${severityClass(change.severity)}">${escapeHtml(change.severity)}</span>${change.review_required ? '<span class="review-badge">Review</span>' : ""}</div>
-    <h2><a href="#change-detail/${encodeURIComponent(change.id)}">${escapeHtml(place(change))}<br>${escapeHtml(change.program?.name ?? "地単公費マスター")}</a></h2>
-    <p>${escapeHtml(change.summary)}</p>
-    <p class="meta">施行: ${escapeHtml(change.effective_from ?? "未確定")} / 検知: ${escapeHtml(formatDate(change.detected_at))}</p>
+    <h2><a href="#change-detail/${encodeURIComponent(change.id)}">${escapeHtml(headline(change))}</a></h2>
+    <p>${escapeHtml(interpSummary(change))}</p>
+    <p class="action-line"><strong>対応:</strong> ${escapeHtml(recommendedAction(change))}</p>
+    <p class="meta">確度: ${escapeHtml(confidence(change))} / 施行: ${escapeHtml(change.effective_from ?? "未確定")} / 検知: ${escapeHtml(formatDate(change.detected_at))}</p>
     <div class="tags">${(change.change_categories ?? []).map(item => `<span>${escapeHtml(item)}</span>`).join("")}</div>
   </article>`).join("");
   return `${kpis()}<div class="grid">${rows || '<section class="empty">変更はまだありません。</section>'}</div>`;
@@ -148,12 +173,18 @@ function renderDetail() {
   const change = selectedChange();
   if (!change) return '<section class="empty">変更詳細はまだありません。</section>';
   const evidenceRows = (change.evidence ?? []).map(item => `<tr><td>${escapeHtml(item.evidence_level)}</td><td>${escapeHtml(item.field ?? item.type)}</td><td>${escapeHtml(item.before ?? "")}</td><td>${escapeHtml(item.after ?? "")}</td><td>${escapeHtml(item.description ?? "")}</td></tr>`).join("");
+  const impacts = impactList(change).map(item => `<li>${escapeHtml(item)}</li>`).join("");
   return `<section class="detail-panel">
     <div class="card-top"><span class="severity ${severityClass(change.severity)}">${escapeHtml(change.severity)}</span>${change.review_required ? '<span class="review-badge">Review</span>' : ""}</div>
-    <h2>${escapeHtml(place(change))} ${escapeHtml(change.program?.name ?? "地単公費マスター")}</h2>
-    <p>${escapeHtml(change.summary)}</p>
-    <dl class="facts"><div><dt>Run</dt><dd>${escapeHtml(change.run_id)}</dd></div><div><dt>公費負担者番号</dt><dd>${escapeHtml(change.program?.public_funding_number ?? "")}</dd></div><div><dt>施行</dt><dd>${escapeHtml(change.effective_from ?? "未確定")}</dd></div></dl>
-    <h2>Evidence</h2>
+    <h2>${escapeHtml(headline(change))}</h2>
+    <p class="lead">${escapeHtml(interpSummary(change))}</p>
+    <div class="interpretation-block">
+      <h2>解釈</h2>
+      <ul>${impacts || '<li>想定影響はまだ整理されていません。</li>'}</ul>
+      <p class="action-line"><strong>推奨対応:</strong> ${escapeHtml(recommendedAction(change))}</p>
+    </div>
+    <dl class="facts"><div><dt>Run</dt><dd>${escapeHtml(change.run_id)}</dd></div><div><dt>確度</dt><dd>${escapeHtml(confidence(change))}</dd></div><div><dt>公費負担者番号</dt><dd>${escapeHtml(change.program?.public_funding_number ?? "")}</dd></div><div><dt>施行</dt><dd>${escapeHtml(change.effective_from ?? "未確定")}</dd></div></dl>
+    <h2>根拠</h2>
     <table class="table"><tr><th>Level</th><th>Field</th><th>Before</th><th>After</th><th>Description</th></tr>${evidenceRows}</table>
   </section>`;
 }

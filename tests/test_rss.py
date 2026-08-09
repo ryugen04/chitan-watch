@@ -53,6 +53,16 @@ class RssTest(unittest.TestCase):
                     "change_categories": ["master-row-modified"],
                     "vendor_impacts": ["master-import"],
                     "evidence": [{"type": "master_field_diff", "field": "item_1", "before": "A", "after": "B", "evidence_level": "CONFIRMED"}],
+                    "interpretation": {
+                        "headline": "13-131016 の制度 <test> が変更されています",
+                        "summary": "制度名の変更を検知しました。",
+                        "likely_impact": ["マスター更新確認が必要です。"],
+                        "recommended_action": "公式ソースを確認してください。",
+                        "confidence": "CONFIRMED",
+                        "evidence_level": "CONFIRMED",
+                        "generated_by": "deterministic",
+                        "needs_review": False,
+                    },
                 }
             ],
             options=RssFeedOptions(site_url="https://example.test/chitan"),
@@ -62,10 +72,12 @@ class RssTest(unittest.TestCase):
         channel = root.find("channel")
         self.assertEqual("Chitan Watch Changes", channel.findtext("title"))
         item = channel.find("item")
-        self.assertIn("制度 <test>", item.findtext("title"))
+        self.assertIn("13-131016 の制度 <test> が変更されています", item.findtext("title"))
         self.assertIn("https://example.test/chitan/#change-detail/chg-test", item.findtext("link"))
         description = item.findtext("description") or ""
-        self.assertIn("地単公費マスターの内容変更を検知しました。", description)
+        self.assertIn("制度名の変更を検知しました。", description)
+        self.assertIn("想定影響: マスター更新確認が必要です。", description)
+        self.assertIn("推奨対応: 公式ソースを確認してください。", description)
         self.assertIn("対象: 制度 <test>", description)
         self.assertIn("重要度: 高", description)
         self.assertIn("検知日時: 2026-08-09 09:05 JST", description)
