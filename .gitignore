@@ -49,6 +49,9 @@ logs/
 tmp/
 temp/
 
+# Local workflow artifacts
+.careflow/
+
 # Chitan Watch runtime/generated outputs
 storage/
 artifacts/
