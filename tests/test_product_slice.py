@@ -11,9 +11,10 @@ import unittest
 from chitan_watch.api import build_api_payload
 from chitan_watch.change_events import build_change_event_bundle
 from chitan_watch.live_crawl import execute_live_local_run, execute_registry_local_run
+from chitan_watch.change_events import build_change_event_bundle
 from chitan_watch.local_store import LocalRunStore, execute_local_run
 from chitan_watch.models import ArtifactType, CrawlerRunStatus
-from chitan_watch.run_state import load_specs
+from chitan_watch.run_state import ArtifactRunChange, CrawlerRunEvaluation, load_specs
 
 FIXTURES = Path(__file__).parent / "fixtures"
 ROOT = FIXTURES.parent.parent
@@ -74,6 +75,51 @@ class ProductSliceTest(unittest.TestCase):
         self.assertEqual("live-new", events["run_id"])
         self.assertGreaterEqual(first.change_event_count, 1)
 
+
+    def test_legacy_scope_removed_artifacts_do_not_emit_feed_events(self):
+        run = CrawlerRunEvaluation(
+            status=CrawlerRunStatus.SUCCESS_CHANGED,
+            source_id="chitan-watch",
+            evaluated_at="2026-08-09T00:05:00+00:00",
+            artifact_count=1,
+            changed_artifact_count=1,
+            failed_artifact_count=0,
+            schema_break_count=0,
+            artifact_changes=(
+                ArtifactRunChange(
+                    artifact_id="legacy-pmh",
+                    artifact_type=ArtifactType.HTML,
+                    title="旧 PMH 監視ページ",
+                    canonical_url="https://www.digital.go.jp/policies/health/public-medical-hub",
+                    state="removed",
+                    previous_sha256="old",
+                    source_group="pmh-online-qualification",
+                    source_layer="pmh-online-qualification",
+                    source_owner="digital-agency",
+                    notify_policy="important_only",
+                    review_policy="conditional",
+                ),
+                ArtifactRunChange(
+                    artifact_id="current-faq",
+                    artifact_type=ArtifactType.FAQ,
+                    title="5_FAQ",
+                    canonical_url="https://www.ssk.or.jp/seikyushiharai/titansys/index.files/siryo5_FAQ_20250530.pdf",
+                    state="removed",
+                    previous_sha256="old",
+                    source_group="master-registration-operation",
+                    source_layer="master-registration-operation",
+                    source_owner="ssk",
+                    notify_policy="important_only",
+                    review_policy="conditional",
+                ),
+            ),
+        )
+        events = build_change_event_bundle("scope-cleanup", run).events
+        categories = {category for event in events for category in event.change_categories}
+        self.assertEqual(1, len(events))
+        self.assertEqual("5_FAQ", events[0].program["name"])
+        self.assertIn("source-layer:master-registration-operation", categories)
+        self.assertNotIn("source-layer:pmh-online-qualification", categories)
 
     def test_registry_backed_run_emits_master_and_document_events(self):
         with tempfile.TemporaryDirectory() as tmpdir:

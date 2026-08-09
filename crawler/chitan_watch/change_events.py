@@ -255,6 +255,15 @@ SOURCE_LAYER_LABELS = {
     "source-health": "ソース管理",
 }
 
+CURRENT_NOTIFICATION_SOURCE_LAYERS = {
+    "master-latest-data",
+    "master-registration-operation",
+    "policy-faq",
+    "reference-portal",
+    "site-news-health",
+}
+
+
 SOURCE_OWNER_LABELS = {
     "ssk": "社会保険診療報酬支払基金",
     "mhlw": "厚生労働省",
@@ -472,6 +481,8 @@ def build_change_event_bundle(run_id: str, run: CrawlerRunEvaluation) -> ChangeE
         if change.state == "unchanged":
             continue
         if change.notify_policy in {"health_only", "never"} and change.state != "failed":
+            continue
+        if change.state == "removed" and change.source_layer not in CURRENT_NOTIFICATION_SOURCE_LAYERS:
             continue
         if master_diff_has_events and change.artifact_type == ArtifactType.MASTER_CSV and change.state == "changed":
             continue
