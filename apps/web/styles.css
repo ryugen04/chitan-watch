@@ -74,6 +74,26 @@ h1 { margin: 0; font-size: 30px; letter-spacing: 0; }
 .action-line { color: var(--ink); line-height: 1.55; }
 .interpretation-block { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 12px 0; margin: 14px 0; }
 .interpretation-block ul { margin: 8px 0 10px; padding-left: 20px; line-height: 1.55; }
+.guide-note, .page-note { color: var(--muted); font-size: 14px; }
+.page-note { margin: -4px 0 14px; }
+.guide-link { color: var(--accent); font-weight: 700; text-decoration: none; }
+.guide-link:hover { text-decoration: underline; }
+.guide-panel { display: grid; gap: 16px; }
+.guide-intro, .guide-section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+.guide-intro p, .guide-section p, .guide-section li, .term-list dd, .flow-list span { line-height: 1.65; }
+.guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.guide-wide { grid-column: 1 / -1; }
+.guide-section h2 { font-size: 17px; margin: 0 0 10px; }
+.guide-section ol { margin: 8px 0 0; padding-left: 20px; }
+.flow-list { display: grid; gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; }
+.flow-list li { display: grid; grid-template-columns: minmax(110px, 150px) 1fr; gap: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.flow-list li:first-child { border-top: 0; padding-top: 0; }
+.flow-list strong { color: var(--accent); }
+.term-list { display: grid; gap: 8px; margin: 0; }
+.term-list div { border-top: 1px solid var(--line); padding-top: 8px; }
+.term-list div:first-child { border-top: 0; padding-top: 0; }
+.term-list dt { font-weight: 700; }
+.term-list dd { margin: 4px 0 0; color: var(--muted); }
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .meta { color: var(--muted); font-size: 13px; }
 .severity, .review-badge, .tags span, .source-state {
@@ -113,4 +133,5 @@ h1 { margin: 0; font-size: 30px; letter-spacing: 0; }
   .shell-main { padding: 18px; }
   .toolbar { align-items: flex-start; flex-direction: column; }
   .table-panel { overflow-x: auto; }
+  .flow-list li { grid-template-columns: 1fr; gap: 4px; }
 }

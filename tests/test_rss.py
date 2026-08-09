@@ -83,6 +83,7 @@ class RssTest(unittest.TestCase):
         self.assertIn("検知日時: 2026-08-09 09:05 JST", description)
         self.assertIn("分類: マスター行の変更", description)
         self.assertIn("詳細: https://example.test/chitan/#change-detail/chg-test", description)
+        self.assertIn("通知の見方: https://example.test/chitan/#guide", description)
         self.assertNotIn("master_field_diff", description)
         self.assertNotIn("A -> B", description)
 

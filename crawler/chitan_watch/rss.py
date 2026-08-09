@@ -53,6 +53,10 @@ def _change_link(site_url: str, change_id: str) -> str:
     return _absolute_url(site_url, f"#change-detail/{quote(change_id)}")
 
 
+def _guide_link(site_url: str) -> str:
+    return _absolute_url(site_url, "#guide")
+
+
 def _text(parent: ET.Element, tag: str, value: object | None) -> ET.Element:
     child = ET.SubElement(parent, tag)
     child.text = "" if value is None else str(value)
@@ -171,7 +175,7 @@ def _headline(event: dict) -> str:
     return str(interpretation.get("headline") or _event_action_sentence(event))
 
 
-def _item_description(event: dict, detail_link: str) -> str:
+def _item_description(event: dict, detail_link: str, guide_link: str) -> str:
     categories = [label for category in event.get("change_categories") or () if (label := _category_label(category))]
     interpretation = _interpretation(event)
     replay_label = event.get("rss_replay_label")
@@ -203,6 +207,7 @@ def _item_description(event: dict, detail_link: str) -> str:
         lines.append("確認: 管理者レビューが必要です。")
     lines.extend([
         f"詳細: {detail_link}",
+        f"通知の見方: {guide_link}",
         "出典: 社会保険診療報酬支払基金",
     ])
     return "\n".join(lines)
@@ -253,7 +258,7 @@ def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFee
         guid = _text(item, "guid", str(event.get("id") or link))
         guid.set("isPermaLink", "false")
         _text(item, "pubDate", _rfc2822(event.get("detected_at")))
-        _text(item, "description", _item_description(event, link))
+        _text(item, "description", _item_description(event, link, _guide_link(options.site_url)))
         _text(item, "author", "noreply@chitan-watch.local (Chitan Watch)")
         for category in event.get("change_categories") or ():
             _text(item, "category", category)
