@@ -49,6 +49,7 @@ class ChangeEventCandidate:
     source_run_status: CrawlerRunStatus
     interpretation: ChangeInterpretation
     review_required: bool = False
+    source_context: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -240,8 +241,60 @@ def _artifact_kind_label(artifact_type: ArtifactType) -> str:
     }.get(artifact_type, "公式資料")
 
 
+SOURCE_LAYER_LABELS = {
+    "policy-context": "制度・政策文脈",
+    "pmh-online-qualification": "PMH/オンライン資格確認",
+    "master-publication": "地単公費マスター公開",
+    "claim-processing": "審査支払・請求運用",
+    "municipality-policy": "自治体個別制度",
+    "source-health": "ソース管理",
+}
+
+SOURCE_OWNER_LABELS = {
+    "ssk": "社会保険診療報酬支払基金",
+    "mhlw": "厚生労働省",
+    "digital-agency": "デジタル庁",
+    "shinryohoshu": "診療報酬情報提供サービス",
+    "municipality": "自治体公式サイト",
+    "kokuho": "国保中央会/国保連系情報",
+    "unknown": "公式ソース",
+}
+
+
+def _source_layer_label(value: str | None) -> str:
+    return SOURCE_LAYER_LABELS.get(value or "", value or "公式ソース")
+
+
+def _source_owner_label(value: str | None) -> str:
+    return SOURCE_OWNER_LABELS.get(value or "", value or "公式ソース")
+
+
+def _source_context(change: ArtifactRunChange) -> dict[str, str]:
+    return {
+        key: value
+        for key, value in {
+            "source_group": change.source_group,
+            "source_layer": change.source_layer,
+            "source_owner": change.source_owner,
+            "source_role": change.source_role,
+            "jurisdiction_scope": change.jurisdiction_scope,
+            "monitor_mode": change.monitor_mode,
+            "notify_policy": change.notify_policy,
+            "review_policy": change.review_policy,
+        }.items()
+        if value
+    }
+
+
 def _artifact_likely_impact(change: ArtifactRunChange) -> tuple[str, ...]:
-    if change.artifact_type == ArtifactType.MASTER_EXCEL:
+    layer = change.source_layer or ""
+    if layer == "pmh-online-qualification":
+        return ("マイナンバーカードによる医療費助成資格確認、PMH 参加自治体、制度関連マスタ、医療機関導入状況の確認が必要な可能性があります。",)
+    if layer == "municipality-policy":
+        return ("自治体個別の制度説明、受給者証、自己負担、対象年齢、現物給付/償還払いの扱いが変わった可能性があります。",)
+    if layer == "claim-processing":
+        return ("審査支払機関への委託状況や請求運用の確認が必要な可能性があります。",)
+    if layer == "master-publication" and change.artifact_type == ArtifactType.MASTER_EXCEL:
         return ("CSV と同等または補完的な公式マスターとして、CSV との差異確認が必要な可能性があります。",)
     if change.artifact_type == ArtifactType.SCHEMA:
         return ("項目定義の変更により、CSV パーサや差分解釈の見直しが必要な可能性があります。",)
@@ -272,11 +325,13 @@ def interpretation_for_artifact_change(change: ArtifactRunChange, evidence: tupl
             evidence_level=_evidence_level(evidence),
             needs_review=True,
         )
+    layer = _source_layer_label(change.source_layer)
+    owner = _source_owner_label(change.source_owner)
     return ChangeInterpretation(
-        headline=f"{kind} {change.title} の{action}",
-        summary=f"{kind}として監視対象に入っている公式ソースの状態変化です。",
+        headline=f"{layer}: {kind} {change.title} の{action}",
+        summary=f"{owner} の {layer} レイヤーで監視している公式ソースの状態変化です。",
         likely_impact=_artifact_likely_impact(change),
-        recommended_action="詳細ページから公式ソースと検知内容を確認し、制度変更、定義変更、運用資料更新のどれに当たるかを切り分けてください。",
+        recommended_action="詳細ページから公式ソース、ソース層、検知内容を確認し、制度変更、PMH/資格確認、マスター公開、請求運用、自治体個別制度のどれに当たるかを切り分けてください。",
         confidence=EvidenceLevel.CONFIRMED,
         evidence_level=_evidence_level(evidence),
         needs_review=change.review_policy == "required",
@@ -343,6 +398,12 @@ def _category_for_artifact_change(change: ArtifactRunChange) -> tuple[str, ...]:
         categories.append("document-update")
     if change.source_group:
         categories.append(f"source-group:{change.source_group}")
+    if change.source_layer:
+        categories.append(f"source-layer:{change.source_layer}")
+    if change.source_owner:
+        categories.append(f"source-owner:{change.source_owner}")
+    if change.source_role:
+        categories.append(f"source-role:{change.source_role}")
     return tuple(categories)
 
 
@@ -355,7 +416,7 @@ def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunCha
             evidence_level=EvidenceLevel.CONFIRMED if change.state != "failed" else EvidenceLevel.UNRESOLVED,
             source_url=change.canonical_url,
             snapshot_id=change.current_snapshot_id,
-            description=change.error or f"Artifact state is {change.state}; monitor={change.monitor_mode or 'file_hash'}; notify={change.notify_policy or 'always'}",
+            description=change.error or f"Artifact state is {change.state}; layer={change.source_layer or 'unknown'}; owner={change.source_owner or 'unknown'}; monitor={change.monitor_mode or 'file_hash'}; notify={change.notify_policy or 'always'}",
             before=change.previous_sha256,
             after=change.current_sha256,
         ),
@@ -375,6 +436,7 @@ def event_from_artifact_change(run: CrawlerRunEvaluation, change: ArtifactRunCha
         source_run_status=run.status,
         interpretation=interpretation,
         review_required=change.state == "failed" or change.review_policy == "required",
+        source_context=_source_context(change),
     )
 
 
@@ -389,6 +451,8 @@ def build_change_event_bundle(run_id: str, run: CrawlerRunEvaluation) -> ChangeE
             events.append(event_from_master_change(run, change, source_url=source_url, snapshot_id=master_snapshot_id))
     for change in run.artifact_changes:
         if change.state == "unchanged":
+            continue
+        if change.notify_policy in {"health_only", "never"} and change.state != "failed":
             continue
         if master_diff_has_events and change.artifact_type == ArtifactType.MASTER_CSV and change.state == "changed":
             continue

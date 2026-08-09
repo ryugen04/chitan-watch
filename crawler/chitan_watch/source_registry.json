@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "entries": [
     {
       "id": "ssk-titansys-page",
@@ -11,8 +11,12 @@
         "html"
       ],
       "source_group": "source-page",
+      "source_layer": "master-publication",
+      "source_owner": "ssk",
+      "source_role": "master-publication-index",
+      "jurisdiction_scope": "national",
       "monitor_mode": "source_health",
-      "notify_policy": "important_only",
+      "notify_policy": "health_only",
       "review_policy": "conditional",
       "evidence_level": "CONFIRMED",
       "freshness_sla": "daily",
@@ -38,7 +42,11 @@
         "mhlw_document",
         "other"
       ],
-      "source_group": "official-materials",
+      "source_group": "master-publication",
+      "source_layer": "master-publication",
+      "source_owner": "ssk",
+      "source_role": "public-master-materials",
+      "jurisdiction_scope": "national",
       "monitor_mode": "file_hash",
       "notify_policy": "always",
       "review_policy": "conditional",
@@ -71,8 +79,12 @@
         "html"
       ],
       "source_group": "policy-context",
+      "source_layer": "policy-context",
+      "source_owner": "ssk",
+      "source_role": "medical-subsidy-overview",
+      "jurisdiction_scope": "national",
       "monitor_mode": "source_health",
-      "notify_policy": "important_only",
+      "notify_policy": "health_only",
       "review_policy": "conditional",
       "evidence_level": "CONFIRMED",
       "freshness_sla": "daily",
@@ -87,7 +99,11 @@
       "artifact_types": [
         "html"
       ],
-      "source_group": "commissioned-status",
+      "source_group": "claim-processing",
+      "source_layer": "claim-processing",
+      "source_owner": "ssk",
+      "source_role": "commissioned-claim-status",
+      "jurisdiction_scope": "national-by-prefecture",
       "monitor_mode": "link_presence",
       "notify_policy": "important_only",
       "review_policy": "conditional",
@@ -105,11 +121,194 @@
         "mhlw_document"
       ],
       "source_group": "policy-context",
+      "source_layer": "policy-context",
+      "source_owner": "mhlw",
+      "source_role": "policy-and-explanatory-materials",
+      "jurisdiction_scope": "national",
       "monitor_mode": "source_health",
       "notify_policy": "important_only",
       "review_policy": "conditional",
       "evidence_level": "CONFIRMED",
       "freshness_sla": "daily",
+      "direct": true
+    },
+    {
+      "id": "mhlw-iryouhijosei-online-qualification",
+      "title": "厚労省 医療費助成のオンライン資格確認",
+      "seed_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryou/iryouhijosei-iryoukikan.html",
+      "source_id": "mhlw-pmh",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "pmh-online-qualification",
+      "source_layer": "pmh-online-qualification",
+      "source_owner": "mhlw",
+      "source_role": "medical-institution-online-qualification-guide",
+      "jurisdiction_scope": "national",
+      "monitor_mode": "source_health",
+      "notify_policy": "health_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "direct": true
+    },
+    {
+      "id": "digital-agency-pmh-hub-page",
+      "title": "デジタル庁 Public Medical Hub",
+      "seed_url": "https://www.digital.go.jp/policies/health/public-medical-hub",
+      "source_id": "digital-agency-pmh",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "pmh-online-qualification",
+      "source_layer": "pmh-online-qualification",
+      "source_owner": "digital-agency",
+      "source_role": "pmh-program-overview",
+      "jurisdiction_scope": "national",
+      "monitor_mode": "source_health",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "direct": true
+    },
+    {
+      "id": "digital-agency-pmh-public-materials",
+      "title": "デジタル庁 PMH 公開資料・制度関連マスタ",
+      "seed_url": "https://www.digital.go.jp/policies/health/public-medical-hub",
+      "source_id": "digital-agency-pmh",
+      "allowed_domains": [
+        "www.digital.go.jp",
+        "digital.go.jp"
+      ],
+      "artifact_types": [
+        "master_csv",
+        "master_excel",
+        "other",
+        "html"
+      ],
+      "source_group": "pmh-online-qualification",
+      "source_layer": "pmh-online-qualification",
+      "source_owner": "digital-agency",
+      "source_role": "pmh-public-master-and-participation-files",
+      "jurisdiction_scope": "national-and-local",
+      "monitor_mode": "file_hash",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "include_title_keywords": [
+        "制度関連マスタ",
+        "参加自治体",
+        "導入済み医療機関",
+        "医療機関・薬局リスト",
+        "公費負担者番号一覧"
+      ],
+      "include_url_keywords": [],
+      "exclude_title_keywords": [
+        "English",
+        "利用規約",
+        "API",
+        "仕様書",
+        "設計書",
+        "手順書",
+        "ポスター",
+        "チェックリスト",
+        "アーカイブ",
+        "PIA",
+        "差分履歴",
+        "ベンダ",
+        "共通算定",
+        "エラーコード",
+        "XML",
+        "テスト"
+      ],
+      "direct": false
+    },
+    {
+      "id": "shinryohoshu-seido-master",
+      "title": "診療報酬情報提供サービス 制度マスター",
+      "seed_url": "https://shinryohoshu.mhlw.go.jp/shinryohoshu/html/seido_master.jsp",
+      "source_id": "shinryohoshu-master",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "master-publication",
+      "source_layer": "master-publication",
+      "source_owner": "shinryohoshu",
+      "source_role": "national-seido-master-portal",
+      "jurisdiction_scope": "national",
+      "monitor_mode": "source_health",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "direct": true
+    },
+    {
+      "id": "sapporo-child-medical-subsidy",
+      "title": "札幌市 子ども医療費助成",
+      "seed_url": "https://www.city.sapporo.jp/hoken-iryo/iryojosei/nyuyoji.html",
+      "source_id": "municipality-sapporo",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "municipality-policy",
+      "source_layer": "municipality-policy",
+      "source_owner": "municipality",
+      "source_role": "municipality-benefit-rule-page",
+      "jurisdiction_scope": "sapporo-city",
+      "monitor_mode": "source_health",
+      "notify_policy": "health_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "weekly",
+      "direct": true
+    },
+    {
+      "id": "yokohama-child-medical-subsidy",
+      "title": "横浜市 小児医療費助成",
+      "seed_url": "https://www.city.yokohama.lg.jp/kenko-iryo-fukushi/kenko-iryo/iryohijosei/shoni/child.html",
+      "source_id": "municipality-yokohama",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "municipality-policy",
+      "source_layer": "municipality-policy",
+      "source_owner": "municipality",
+      "source_role": "municipality-benefit-rule-page",
+      "jurisdiction_scope": "yokohama-city",
+      "monitor_mode": "source_health",
+      "notify_policy": "health_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "weekly",
+      "direct": true
+    },
+    {
+      "id": "sumida-child-medical-subsidy",
+      "title": "墨田区 子ども医療費助成",
+      "seed_url": "https://www.city.sumida.lg.jp/kosodate_kyouiku/kosodate_site/teate_jyosei_shien/teate_zyosei/jyosei/nyuuyouji_iryouhi.html",
+      "source_id": "municipality-sumida",
+      "allowed_domains": [],
+      "artifact_types": [
+        "html"
+      ],
+      "source_group": "municipality-policy",
+      "source_layer": "municipality-policy",
+      "source_owner": "municipality",
+      "source_role": "municipality-benefit-rule-page",
+      "jurisdiction_scope": "sumida-city",
+      "monitor_mode": "source_health",
+      "notify_policy": "health_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "weekly",
       "direct": true
     }
   ]

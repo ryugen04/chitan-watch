@@ -196,6 +196,14 @@ def _item_description(event: dict, detail_link: str, guide_link: str) -> str:
         f"重要度: {_severity_label(event.get('severity'))}",
         f"検知日時: {_format_jst(event.get('detected_at'))}",
     ])
+    source_context = event.get("source_context") if isinstance(event.get("source_context"), dict) else {}
+    if source_context:
+        if source_context.get("source_layer"):
+            lines.append(f"ソース層: {source_context.get('source_layer')}")
+        if source_context.get("source_role"):
+            lines.append(f"ソース役割: {source_context.get('source_role')}")
+        if source_context.get("source_owner"):
+            lines.append(f"情報元: {source_context.get('source_owner')}")
     if event.get("effective_from"):
         lines.append(f"施行日: {event.get('effective_from')}")
     confidence = interpretation.get("confidence") or interpretation.get("evidence_level")
@@ -208,7 +216,7 @@ def _item_description(event: dict, detail_link: str, guide_link: str) -> str:
     lines.extend([
         f"詳細: {detail_link}",
         f"背景知識と通知の見方: {guide_link}",
-        "出典: 社会保険診療報酬支払基金",
+        f"出典: {source_context.get('source_owner') or '公式ソース'}",
     ])
     return "\n".join(lines)
 

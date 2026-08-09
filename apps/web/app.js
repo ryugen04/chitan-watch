@@ -43,8 +43,8 @@ const fallbackState = {
     },
   ],
   sources: [
-    { artifact_id: "art_master_csv", title: "Master CSV", type: "master_csv", state: "changed", sha256: "fixture", error: null, source_group: "official-materials", monitor_mode: "semantic_diff", notify_policy: "always", review_policy: "conditional" },
-    { artifact_id: "art_schema", title: "Schema PDF", type: "schema", state: "unchanged", sha256: "fixture", error: null, source_group: "official-materials", monitor_mode: "file_hash", notify_policy: "always", review_policy: "conditional" },
+    { artifact_id: "art_master_csv", title: "Master CSV", type: "master_csv", state: "changed", sha256: "fixture", error: null, source_group: "master-publication", source_layer: "master-publication", source_owner: "ssk", source_role: "public-master-materials", jurisdiction_scope: "national", monitor_mode: "semantic_diff", notify_policy: "always", review_policy: "conditional" },
+    { artifact_id: "art_pmh", title: "PMH public materials", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "pmh-online-qualification", source_layer: "pmh-online-qualification", source_owner: "digital-agency", source_role: "pmh-program-overview", jurisdiction_scope: "national", monitor_mode: "source_health", notify_policy: "important_only", review_policy: "conditional" },
   ],
   latest_run_id: "fixture-run",
   apiOnline: false,
@@ -214,14 +214,14 @@ function renderGuide() {
     <section class="guide-section guide-wide">
       <h2>公費制度の入口</h2>
       <p>医療機関の窓口では、健康保険だけでなく、国や自治体の助成制度によって患者負担が軽くなることがあります。地単公費は、地方自治体が独自に実施する医療費助成事業を扱う領域です。こども医療、ひとり親家庭、重度心身障害者など、自治体ごとに名称、対象者、負担方法、開始日が異なります。</p>
-      <p>支払基金の地単公費関連ページでは、地方単独医療費助成事業を扱うマスター、事業一覧、登録や変更のための資料が公開されています。Chitan Watch は、この公開資料を起点にしています。</p>
+      <p>支払基金の地単公費関連ページは、地単公費マスターの公開・登録運用を見るうえで重要です。ただし、制度全体の正を支払基金だけに置くことはできません。PMH、診療報酬情報提供サービス、厚労省、審査支払機関、自治体個別ページを別々の情報層として見ます。</p>
     </section>
     <section class="guide-section guide-wide">
       <h2>全体像</h2>
       <ol class="flow-list">
         <li><strong>制度</strong><span>自治体が医療費助成事業を設計します。対象者、自己負担、所得制限、現物給付か償還払いかといった運用条件が制度の中身です。</span></li>
         <li><strong>マスター</strong><span>制度を医療機関やシステムが扱えるよう、公費負担者番号、制度名、都道府県や市町村、施行日、分類などの行データにします。</span></li>
-        <li><strong>公開資料</strong><span>支払基金などの公式サイトに、CSV、Excel、PDF、ZIP 形式の資料が掲載されます。ファイル名や掲載日が業務上の手がかりになります。</span></li>
+        <li><strong>公式ソース</strong><span>支払基金、PMH、診療報酬情報提供サービス、厚労省、自治体サイトが、それぞれ別の役割で情報を出します。どの層の更新かを分けて読む必要があります。</span></li>
         <li><strong>検知</strong><span>GitHub Actions が公開ページを確認し、前回保存したファイルやマスター行と比べます。ファイル追加、更新、削除、行変更を change として記録します。</span></li>
         <li><strong>判断</strong><span>通知は作業命令ではありません。担当システムの取込対象か、公式資料で根拠を確認できるか、社内手順に進めるかを人が判断します。</span></li>
       </ol>
@@ -245,11 +245,21 @@ function renderGuide() {
       </article>
       <article class="guide-section">
         <h2>Chitan Watch の設計</h2>
-        <p>サイトはサーバーを持たず、GitHub Pages で静的ファイルとして公開します。Source Registry に登録した公式ページと資料を定期確認し、生成した JSON を画面が読みます。RSS は同じ変更データから作ります。</p>
+        <p>サイトはサーバーを持たず、GitHub Pages で静的ファイルとして公開します。Source Registry は URL の一覧ではなく、source_layer、source_owner、source_role、notify_policy を持つ情報地図です。RSS は利用者が読むべき変化に絞り、health_only の seed は Source Health で見ます。</p>
+      </article>
+      <article class="guide-section">
+        <h2>情報層の分け方</h2>
+        <dl class="term-list">
+          <div><dt>policy-context</dt><dd>厚労省や支払基金が出す制度背景、説明会、運用方針です。</dd></div>
+          <div><dt>pmh-online-qualification</dt><dd>マイナンバーカードで医療費助成資格を確認する PMH 関連情報です。</dd></div>
+          <div><dt>master-publication</dt><dd>地単公費マスター、項目一覧、入力要領、FAQ などの公開資料です。</dd></div>
+          <div><dt>claim-processing</dt><dd>審査支払機関への委託状況や請求運用の文脈です。</dd></div>
+          <div><dt>municipality-policy</dt><dd>自治体個別の制度説明、受給者証、対象者、自己負担の情報です。</dd></div>
+        </dl>
       </article>
       <article class="guide-section">
         <h2>現在の監視範囲</h2>
-        <p>MVP では、支払基金の地単公費マスター関連ページ、確定事業一覧 CSV と Excel、項目一覧、入力要領、入力例、FAQ、委託状況、厚労省の関連資料を監視します。自治体個別ページは公式裏取り候補として段階導入します。</p>
+        <p>MVP では、支払基金のマスター公開資料だけでなく、PMH/オンライン資格確認、診療報酬情報提供サービスの制度マスター入口、厚労省の政策・医療機関向けページ、自治体個別制度ページの seed も監視します。自治体ページは当面 Source Health 中心で、全国網羅ではなく公式裏取りの型を作る段階です。</p>
       </article>
       <article class="guide-section">
         <h2>データの構造</h2>
@@ -305,9 +315,11 @@ function renderGuide() {
     <section class="guide-section guide-wide">
       <h2>情報源</h2>
       <ul class="source-list">
-        <li><a href="https://www.ssk.or.jp/seikyushiharai/chitan/chitan_01.html" target="_blank" rel="noopener">社会保険診療報酬支払基金 地方単独医療費助成事業関連情報</a></li>
-        <li><a href="https://shinryohoshu.mhlw.go.jp/shinryohoshu/" target="_blank" rel="noopener">診療報酬情報提供サービス</a></li>
-        <li><a href="https://www.mhlw.go.jp/" target="_blank" rel="noopener">厚生労働省</a></li>
+        <li><a href="https://www.ssk.or.jp/seikyushiharai/titansys/index.html" target="_blank" rel="noopener">社会保険診療報酬支払基金 地単公費マスター関連ページ</a></li>
+        <li><a href="https://www.digital.go.jp/policies/health/public-medical-hub" target="_blank" rel="noopener">デジタル庁 Public Medical Hub</a></li>
+        <li><a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryou/iryouhijosei-iryoukikan.html" target="_blank" rel="noopener">厚生労働省 医療費助成のオンライン資格確認</a></li>
+        <li><a href="https://shinryohoshu.mhlw.go.jp/shinryohoshu/html/seido_master.jsp" target="_blank" rel="noopener">診療報酬情報提供サービス 制度マスター</a></li>
+        <li><a href="https://www.ssk.or.jp/seikyushiharai/chitan/jutaku/index.html" target="_blank" rel="noopener">支払基金が受託している医療費助成事業</a></li>
       </ul>
     </section>
   </section>`;
@@ -316,13 +328,13 @@ function renderGuide() {
 function renderSources() {
   const run = latestRun();
   const groups = state.sources.reduce((acc, source) => {
-    const key = source.source_group || "uncategorized";
+    const key = source.source_layer || source.source_group || "uncategorized";
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
   const groupText = Object.entries(groups).map(([name, count]) => `${escapeHtml(name)} ${count}`).join(" / ");
-  const rows = state.sources.map(source => `<tr><td>${escapeHtml(source.title)}</td><td><span class="source-state">${escapeHtml(source.state)}</span></td><td>${escapeHtml(source.type)}</td><td>${escapeHtml(source.source_group ?? "")}</td><td>${escapeHtml(source.monitor_mode ?? "")}</td><td>${escapeHtml(source.notify_policy ?? "")}</td><td>${escapeHtml(source.review_policy ?? "")}</td><td>${escapeHtml(source.sha256 ? source.sha256.slice(0, 12) : "")}</td><td>${escapeHtml(source.error ?? "")}</td></tr>`).join("");
-  return `<section class="table-panel"><div class="run-strip"><span class="status-dot ${statusClass(run?.status)}"></span><strong>${escapeHtml(run?.status ?? "NO_RUN")}</strong><span class="meta">Latest: ${escapeHtml(state.latest_run_id ?? "-")}</span></div><p class="page-note">監視対象: ${groupText || "未設定"}</p><table class="table"><tr><th>Source</th><th>State</th><th>Type</th><th>Group</th><th>Monitor</th><th>Notify</th><th>Review</th><th>SHA-256</th><th>Error</th></tr>${rows}</table></section>`;
+  const rows = state.sources.map(source => `<tr><td>${escapeHtml(source.title)}</td><td><span class="source-state">${escapeHtml(source.state)}</span></td><td>${escapeHtml(source.type)}</td><td>${escapeHtml(source.source_layer ?? "")}</td><td>${escapeHtml(source.source_owner ?? "")}</td><td>${escapeHtml(source.source_role ?? "")}</td><td>${escapeHtml(source.jurisdiction_scope ?? "")}</td><td>${escapeHtml(source.monitor_mode ?? "")}</td><td>${escapeHtml(source.notify_policy ?? "")}</td><td>${escapeHtml(source.review_policy ?? "")}</td><td>${escapeHtml(source.sha256 ? source.sha256.slice(0, 12) : "")}</td><td>${escapeHtml(source.error ?? "")}</td></tr>`).join("");
+  return `<section class="table-panel"><div class="run-strip"><span class="status-dot ${statusClass(run?.status)}"></span><strong>${escapeHtml(run?.status ?? "NO_RUN")}</strong><span class="meta">Latest: ${escapeHtml(state.latest_run_id ?? "-")}</span></div><p class="page-note">監視対象レイヤー: ${groupText || "未設定"}</p><table class="table"><tr><th>Source</th><th>State</th><th>Type</th><th>Layer</th><th>Owner</th><th>Role</th><th>Scope</th><th>Monitor</th><th>Notify</th><th>Review</th><th>SHA-256</th><th>Error</th></tr>${rows}</table></section>`;
 }
 
 function titleFor(route) {

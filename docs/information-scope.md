@@ -2,201 +2,120 @@
 
 > モード: full-advisory
 >
-> 対象読者: Chitan Watch の監視対象を設計する人、地単公費まわりの情報構造にまだ慣れていない人
+> 対象読者: Chitan Watch の監視対象を設計する人、地単公費/医療費助成/PMH まわりの情報構造にまだ慣れていない人
 >
-> この記事で決めること: Chitan Watch が扱うべき情報の種類、扱わない情報、検知と通知の粒度、次の実装で守る境界
+> この記事で決めること: どの公式情報をどの役割で見るか、支払基金をどこに位置付けるか、MVP の監視対象と通知境界
 
 ## 先に結論
 
-Chitan Watch は、地単公費マスター CSV だけを見るプロダクトではない。公費制度の運用に必要な情報は、マスター本体、項目定義、入力要領、FAQ、入力例、委託状況、厚労省資料、支払基金の制度ページに分かれている。
+支払基金の地単公費マスター関連ページは重要だが、Chitan Watch 全体の「唯一の正」ではない。支払基金は主に地単公費マスター公開、登録運用資料、受託状況を確認する層であり、制度全体は PMH、診療報酬情報提供サービス、厚労省、審査支払機関、自治体個別ページに分散している。
 
-現在の production workflow は `master_csv` だけに絞っているため、情報範囲としては不足している。これは MVP の細い入口であり、完成形ではない。
+したがって Chitan Watch は、単一ページ監視ではなく Source Registry による多層監視として設計する。各ソースには `source_layer`、`source_owner`、`source_role`、`jurisdiction_scope`、`monitor_mode`、`notify_policy` を持たせる。
 
-次の設計では、情報を「意味差分を取るもの」「ファイル更新を通知するもの」「文脈として表示するもの」「ノイズとして除外するもの」に分ける。全部を同じ重要度で RSS に流すと、利用者は何を見ればよいか分からなくなる。
+RSS は全監視対象をそのまま流す場所ではない。マスター、定義資料、PMH/資格確認、請求運用、自治体制度のどの層かが読める通知だけを流し、seed の健全性確認や自治体ページの初期裏取りは Source Health 中心に置く。
 
-## 現状の事実
+## 問題の本質
 
-### 本番 workflow は CSV 一件に絞っている
+地単公費は「CSV が更新されたら終わり」という問題ではない。制度は自治体が持ち、医療機関やシステムで扱うためにマスター化され、オンライン資格確認/PMH の導入状況と接続し、審査支払機関の委託・請求運用に流れ込む。どの層の更新かを分けない通知は、利用者にとって意味のないノイズになる。
 
-`.github/workflows/publish-static.yml:57` から `.github/workflows/publish-static.yml:61` では、支払基金の `titansys` ページをクロールしている。ただし `--artifact-type master_csv` が指定されているため、production の RSS とサイトは CSV だけを監視対象にしている。
+以前の設計は、支払基金の `titansys` ページを広げた点は一歩前進だったが、まだ「支払基金周辺で完結する」という暗黙の偏りが残っていた。これは正しくない。
 
-```text
-python3 -m chitan_watch.cli run-official-local https://www.ssk.or.jp/seikyushiharai/titansys/index.html --artifact-type master_csv
-```
+## 公式情報レイヤー
 
-### 実装モデルは複数種類の資料を想定している
-
-`crawler/chitan_watch/models.py:12` から `crawler/chitan_watch/models.py:22` には、CSV だけでなく Excel、項目定義、入力要領、マニュアル、入力例、FAQ、厚労省資料、HTML、その他が定義されている。
-
-`crawler/chitan_watch/live_crawl.py:13` から `crawler/chitan_watch/live_crawl.py:14` では、実行側の既定値として `master_csv`、`master_excel`、`schema` が置かれている。production workflow はこの既定値よりさらに狭い。
-
-### イベント生成にも未完成な境界がある
-
-`crawler/chitan_watch/change_events.py:336` から `crawler/chitan_watch/change_events.py:350` では、master diff が存在すると master row events を作り、そうでない場合だけ artifact events を作る。つまり、マスター行差分と文書更新を同じ run で両方通知する設計になっていない。
-
-## 公式ページから見える情報の種類
-
-2026-08-09 時点で、支払基金の地単公費マスター関連ページを確認すると、少なくとも次の情報が見える。公式ページには、地単公費マスターは現物給付の制度を対象とし、償還払いの制度は含まれない旨が書かれている。自治体が新規制度を開始または既存制度を変更する場合は、原則として変更6か月前の月末までに Web フォームで更新対応する説明もある。
-
-| 区分 | 例 | 役割 | 初期扱い |
-|---|---|---|---|
-| マスター本体 | 地単公費マスター確定事業一覧 CSV | システム取込や行差分の中心 | 意味差分と RSS 通知 |
-| 代替形式 | 同 Excel | 人の確認や CSV 不具合時の照合 | ファイル更新検知、CSV との整合確認 |
-| 項目定義 | 地単公費マスター項目一覧 PDF | CSV 列の意味を決める | schema change として通知 |
-| 入力要領 | 地単公費マスター項目入力要領 PDF | 各項目の入力ルール | document change として通知 |
-| 入力例 | 地単公費マスター入力例 PDF | 制度登録の具体例 | document change として通知 |
-| FAQ | FAQ PDF | 運用上の疑問と回答 | document change として通知 |
-| 基本説明 | 地単公費マスターの整備について PDF | 制度整備の背景 | 文脈更新として通知 |
-| 委託状況 | 地単公費の請求事務の各自治体の委託状況 PDF | 現物給付や委託範囲の把握 | document change として通知 |
-| 厚労省資料 | 国公費・地単公費マスタの変更・更新関連ページ | 政策文脈、説明会資料 | curated reference として監視 |
-| 受託状況 | 支払基金が受託している医療費助成事業 | 都道府県別、事業種別、受託変更の把握 | 重要な運用文脈として監視 |
-| 支払基金制度ページ | 地方単独医療費助成事業関連情報 | 制度全体の入口 | source page として監視 |
-| 自治体公式ページ | 条例、要綱、告知、制度説明 | マスター差分の裏取り候補 | curated source として段階導入 |
-| Web フォーム | 地単公費マスター事業情報登録システム | 登録・変更の操作入口 | ログイン内は監視対象外、公開説明のみ文脈化 |
-| HTML ナビゲーション | サイトトップ、サイトマップ、関連サイト | クロール時に混ざるノイズ | 初期は除外 |
-
-## 情報範囲の決定
-
-Chitan Watch の対象情報は、次の四層に分ける。
-
-### Layer 1 業務データ
-
-業務システムや請求実務に直接入るデータ。CSV と Excel の確定事業一覧がここに入る。
-
-扱い方は、ファイルの追加・削除・更新を検知し、CSV については行単位の意味差分を取る。RSS と Changes に出す。Excel は初期段階ではファイル更新と CSV 照合の補助に使い、Excel 自体を正とする意味差分は後続で決める。
-
-### Layer 2 データ定義
-
-CSV の列や入力値の意味を決める資料。項目一覧、入力要領、入力例がここに入る。
-
-扱い方は、ファイル更新を検知し、Schema または Document 変更として RSS と Changes に出す。本文差分の抽出は後続でよいが、更新を Source Health だけに閉じ込めてはいけない。列定義が変わると、CSV パーサや業務解釈が変わるためだ。
-
-### Layer 3 運用文脈
-
-FAQ、基本説明、委託状況、現物給付化の説明会資料がここに入る。
-
-扱い方は、Document 変更として通知する。ただし severity は原則 LOW または INFO から始める。文書が更新された事実と、マスター更新が必要な事実を混ぜない。
-
-### Layer 4 公式裏取り情報
-
-自治体公式ページ、条例、要綱、支払基金の受託状況がここに入る。
-
-扱い方は、まず curated source として登録し、マスター差分の裏取りや影響範囲の補助に使う。自治体ページは数が多く形式もばらつくため、初期から全自治体を広域クロールしない。公式性、対象制度、更新履歴、機械的取得可能性を満たすものから段階的に入れる。
-
-### Layer 5 ソース管理情報
-
-公式ページそのもの、リンク一覧、取得失敗、HTTP メタデータ、ハッシュ、最終確認日時がここに入る。
-
-扱い方は、Source Health に必ず出す。RSS に出すのは、取得失敗、重要リンクの追加・削除、監視対象ファイルの消失に限る。サイト内ナビゲーション HTML は監視対象ではなく、クロール上のノイズとして除外する。
-
-## 初期スコープと対象外
-
-| 判定 | 情報 | 理由 |
-|---|---|---|
-| 対象 | 支払基金 `titansys` ページの CSV | 現在の中核データ |
-| 対象 | 同 Excel | CSV の代替形式、照合対象 |
-| 対象 | 項目一覧 PDF | CSV 構造の根拠 |
-| 対象 | 入力要領 PDF | データ項目の運用ルール |
-| 対象 | 入力例 PDF | 初学者とレビュー担当の確認材料 |
-| 対象 | FAQ PDF | 運用変更の早期検知に必要 |
-| 対象 | 委託状況 PDF | 自治体・現物給付の文脈に関係する |
-| 対象 | 厚労省の地単公費関連ページ | 政策文脈と説明会資料の更新を知るため |
-| 対象 | 支払基金の受託状況ページ | 自治体・事業種別の受託状況がマスター差分の背景になるため |
-| 対象 | 支払基金の地方単独医療費助成事業関連情報ページ | 制度全体の入口 |
-| 段階導入 | 各自治体の個別ページ | 公式裏取りとして価値は高いが、正規ソース選定が必要 |
-| 保留 | ベンダー資料、ブログ、二次解説 | 公式根拠ではない |
-| 除外 | 支払基金サイトのグローバルナビ HTML | 地単公費更新とは関係しない |
-| 除外 | サイトマップ、関連サイト、トップページ | クロールノイズになりやすい |
-
-## 検知と通知の設計ルール
-
-| 変更種別 | 検知 | RSS | Web 表示 | Review |
+| source_layer | 主な owner | 何を見るか | 例 | 初期扱い |
 |---|---|---|---|---|
-| CSV 行追加 | 行差分 | 出す | Changes、Detail、Master | 条件付き |
-| CSV 行変更 | 行差分 | 出す | Changes、Detail、Master | 条件付き |
-| CSV 行削除 | 行差分 | 出す | Changes、Detail、Master | 必要 |
-| Excel 更新 | ハッシュ差分 | 出す | Changes、Source Health | 必要に応じる |
-| 項目一覧更新 | ハッシュ差分、将来は PDF 差分 | 出す | Changes、Source Health | 必要 |
-| 入力要領更新 | ハッシュ差分、将来は PDF 差分 | 出す | Changes、Source Health | 必要に応じる |
-| FAQ 更新 | ハッシュ差分、将来は PDF 差分 | 出す | Changes、Source Health | 原則不要 |
-| 委託状況更新 | ハッシュ差分、将来は PDF 差分 | 出す | Changes、Source Health | 必要に応じる |
-| 公式ページのリンク追加 | リンク差分 | 重要リンクのみ出す | Source Health | 必要に応じる |
-| 取得失敗 | HTTP/取得エラー | 出す | Source Health | 必要 |
-| 受託状況更新 | ファイルまたはページ差分 | 重要変化のみ出す | Changes、Source Health | 必要に応じる |
-| 自治体公式ページ更新 | curated URL の差分 | 初期は出さない | Source Health、Detail の根拠候補 | 必要 |
-| ナビゲーション HTML 変化 | 取らない | 出さない | 出さない | 不要 |
+| `policy-context` | 厚労省、支払基金 | 制度背景、政策文脈、説明会、地単公費マスタ変更・更新の考え方 | 厚労省の国公費・地単公費マスタ関連ページ、支払基金の地方単独医療費助成事業関連情報 | Source Health + 重要更新通知 |
+| `pmh-online-qualification` | デジタル庁、厚労省 | PMH、マイナンバーカードによる医療費助成資格確認、参加自治体、制度関連マスタ、導入医療機関 | デジタル庁 Public Medical Hub、厚労省 医療費助成のオンライン資格確認 | Source Health + PMH 公開資料更新通知 |
+| `master-publication` | 支払基金、診療報酬情報提供サービス | 地単公費マスター、制度マスター、項目一覧、入力要領、FAQ、CSV/Excel | 支払基金 `titansys`、診療報酬情報提供サービス 制度マスター | RSS 通知 + semantic diff |
+| `claim-processing` | 支払基金、国保中央会/国保連系 | 受託状況、審査支払、請求事務、自治体別委託状態 | 支払基金が受託している医療費助成事業 | 重要更新通知 |
+| `municipality-policy` | 自治体 | 制度の実体、対象者、受給者証、自己負担、現物給付/償還払い、条例・要綱 | 札幌市、横浜市、墨田区などの医療費助成ページ | 初期は Source Health 中心、裏取り seed |
 
-## データ構造として持つべきもの
+## 支払基金の位置付け
 
-Source Registry が必要になる。今のように seed URL と artifact type だけで運用すると、公式ページに混ざるナビゲーションリンクと監視対象資料を区別できない。
+支払基金は、地単公費マスター関連資料の公開元として強い一次情報である。確定事業一覧 CSV/Excel、項目一覧、入力要領、入力例、FAQ、委託状況などは、業務システムや請求運用に直結するため MVP の中核に置く。
 
-Source Registry には次の属性を持たせる。
+ただし、自治体制度そのものを設計している主体ではない。PMH の参加自治体や制度関連マスタ、オンライン資格確認の医療機関向け情報、自治体の制度ページを支払基金ページの従属物として扱ってはいけない。
+
+## Source Registry の設計
+
+Source Registry は URL の羅列ではない。各ソースが何の根拠なのかを持つ。
 
 | 属性 | 意味 |
 |---|---|
-| source_group | master, schema, operation, policy, health など |
-| source_url | 公式ページまたはファイル URL |
-| owner | ssk, mhlw, municipality など |
-| artifact_type | master_csv, schema, faq など |
-| monitor_mode | semantic_diff, file_hash, link_presence, source_health |
-| notify_policy | always, important_only, health_only, never |
-| review_policy | required, conditional, none |
-| evidence_level | confirmed, unresolved など |
-| freshness_sla | どの頻度で確認するか |
+| `source_group` | 画面でまとめる運用上のグループ |
+| `source_layer` | policy、PMH、master、claim、municipality のような業務上の情報層 |
+| `source_owner` | ssk、mhlw、digital-agency、shinryohoshu、municipality など |
+| `source_role` | index、public-master-materials、pmh-master、municipality-benefit-rule-page など |
+| `jurisdiction_scope` | national、national-by-prefecture、local など |
+| `monitor_mode` | semantic_diff、file_hash、source_health、link_presence |
+| `notify_policy` | always、important_only、health_only、never |
+| `review_policy` | required、conditional、none |
 
-## データフロー
+## 通知ルール
+
+| 対象 | RSS | 理由 |
+|---|---|---|
+| CSV 行差分 | 出す | 業務システムのマスター反映判断に直結する |
+| CSV/Excel/項目一覧/入力要領/FAQ 更新 | 出す | データ定義や運用ルール変更の可能性がある |
+| PMH 制度関連マスタ/参加自治体/医療機関導入状況 | 出す | 資格確認や医療機関運用に影響しうる |
+| 支払基金/厚労省の政策ページ | 重要更新のみ | 背景情報だが即時作業命令ではない |
+| 受託状況 | 重要更新のみ | 請求運用・委託範囲の変化に関係する |
+| 自治体 seed ページ | 初期は Source Health 中心 | 全国網羅前に公式裏取りの型を作る段階 |
+| 取得失敗 | 出す | 監視不能は運用上の異常だから |
+
+`health_only` のソースは、取得失敗以外は RSS に出さない。画面の Source Health には出す。
+
+## 現在の MVP 監視対象
+
+- 支払基金 地単公費マスター関連ページ
+- 支払基金 地単公費マスター CSV/Excel、項目一覧、入力要領、入力例、FAQ、委託状況
+- 支払基金 地方単独医療費助成事業関連情報
+- 支払基金が受託している医療費助成事業
+- 厚労省 国公費・地単公費マスタの変更・更新関連ページ
+- 厚労省 医療費助成のオンライン資格確認
+- デジタル庁 Public Medical Hub
+- デジタル庁 PMH 公開資料・制度関連マスタ候補
+- 診療報酬情報提供サービス 制度マスター
+- 自治体 seed: 札幌市、横浜市、墨田区の医療費助成ページ
+
+これは全国完成形ではない。MVP の目的は「単一 CSV 監視」から脱し、情報層ごとに増やせる構造を作ることにある。
+
+## 実装境界
 
 ```mermaid
 flowchart LR
-  A[公式ページ] --> B[Source Registry]
-  B --> C[リンク発見]
-  C --> D[Artifact Snapshot]
-  D --> E[差分検知]
-  E --> F[ChangeEvent]
-  F --> G[Web]
-  F --> H[RSS]
-  E --> I[Source Health]
+  A[Source Registry] --> B[Official source discovery]
+  B --> C[Artifact snapshot]
+  C --> D[Run evaluation]
+  D --> E[Change events]
+  D --> F[Source Health]
+  E --> G[RSS]
+  E --> H[Web Changes]
+  F --> I[Web Source Health]
 ```
 
 ```mermaid
 flowchart TD
-  A[検知した変更] --> B{どの層か}
-  B -->|業務データ| C[意味差分を取り RSS に出す]
-  B -->|データ定義| D[文書更新として RSS に出す]
-  B -->|運用文脈| E[低めの重要度で通知]
-  B -->|ソース管理| F[Source Health 中心]
-  B -->|ノイズ| G[除外]
+  A[Official update] --> B{source_layer}
+  B -->|master-publication| C[semantic diff or file hash]
+  B -->|pmh-online-qualification| D[PMH document/master signal]
+  B -->|policy-context| E[policy context signal]
+  B -->|claim-processing| F[commissioned/claim operation signal]
+  B -->|municipality-policy| G[source health and corroboration seed]
+  C --> H[RSS when meaningful]
+  D --> H
+  E --> H
+  F --> H
+  G --> I[Source Health first]
 ```
-
-## 次の実装前に守ること
-
-1 CSV の監視を広げるだけでは足りない。先に Source Registry を作り、監視対象とノイズを区別する。
-
-RSS は全部を流す場所ではない。CSV 行差分、定義資料更新、運用資料更新、取得失敗を区別して、件名と本文で「これは何の変更か」を分かるようにする。
-
-`build_change_event_bundle` は、master diff がある時でも artifact/document change を捨てない形に直す。CSV 行差分と項目一覧 PDF 更新は同じ run で同時に存在しうる。
-
-Guide と Source Health には、現在監視している source group と、まだ監視していない範囲を出す。利用者に「このサイトが世界全体を見ている」と誤解させない。
 
 ## 検証が必要な点
 
-- 支払基金の `titansys` ページ、地方単独医療費助成事業関連情報ページ、受託状況ページをどう source group として分けるか。
-- 厚労省ページをどこまで直接監視対象にするか。
-- 自治体ごとの個別制度ページを対象に入れる場合、条例、要綱、制度案内、更新履歴のどれを primary source として扱うか。
-- Excel と CSV の差分が食い違ったとき、どちらを primary とするか。
-- PDF の本文差分を初期から取るか、まずはハッシュ差分だけにするか。
-
-## 関連ファイル
-
-| ファイル | 役割 |
-|---|---|
-| `.github/workflows/publish-static.yml:57` | production crawl の入口 |
-| `.github/workflows/publish-static.yml:61` | `master_csv` だけに絞っている箇所 |
-| `crawler/chitan_watch/models.py:12` | ArtifactType の定義 |
-| `crawler/chitan_watch/live_crawl.py:13` | 許可ドメインの既定値 |
-| `crawler/chitan_watch/live_crawl.py:14` | crawler の既定 artifact type |
-| `crawler/chitan_watch/change_events.py:336` | ChangeEvent 生成の入口 |
-| `crawler/chitan_watch/change_events.py:340` | master diff が artifact events に優先する箇所 |
+- PMH の downloadable master/参加自治体/医療機関導入ファイルの本文構造を解析対象にするか。
+- 国保中央会/国保連系の公式公開情報をどの URL で継続監視するか。
+- 自治体 seed を全国に広げるための選定基準。条例、要綱、制度説明、更新履歴のどれを primary とするか。
+- 支払基金 CSV と診療報酬情報提供サービスの制度マスターの対応関係。
+- PDF/HTML の本文差分とリンク差分をどの段階で導入するか。
 
 ## 情報源
 
@@ -204,4 +123,9 @@ Guide と Source Health には、現在監視している source group と、ま
 - 社会保険診療報酬支払基金 地方単独医療費助成事業関連情報: https://www.ssk.or.jp/seikyushiharai/chitan/chitan_01.html
 - 社会保険診療報酬支払基金 支払基金が受託している医療費助成事業: https://www.ssk.or.jp/seikyushiharai/chitan/jutaku/index.html
 - 厚生労働省 国公費・地単公費マスタの変更・更新、地単公費の現物給付化の取組について: https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html
-- 診療報酬情報提供サービス: https://shinryohoshu.mhlw.go.jp/shinryohoshu/
+- 厚生労働省 医療費助成のオンライン資格確認: https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryou/iryouhijosei-iryoukikan.html
+- デジタル庁 Public Medical Hub: https://www.digital.go.jp/policies/health/public-medical-hub
+- 診療報酬情報提供サービス 制度マスター: https://shinryohoshu.mhlw.go.jp/shinryohoshu/html/seido_master.jsp
+- 札幌市 子ども医療費助成: https://www.city.sapporo.jp/hoken-iryo/iryojosei/nyuyoji.html
+- 横浜市 小児医療費助成: https://www.city.yokohama.lg.jp/kenko-iryo-fukushi/kenko-iryo/iryohijosei/shoni/child.html
+- 墨田区 子ども医療費助成: https://www.city.sumida.lg.jp/kosodate_kyouiku/kosodate_site/teate_jyosei_shien/teate_zyosei/jyosei/nyuuyouji_iryouhi.html

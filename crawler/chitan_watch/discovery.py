@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
+import codecs
 import hashlib
 
 from .collector import classify_artifact
@@ -45,10 +46,28 @@ class AnchorExtractor(HTMLParser):
         self._current_text = []
 
 
+def _safe_charset(value: str | None) -> str:
+    if not value:
+        return "utf-8"
+    normalized = value.strip().lower().replace("_", "-")
+    aliases = {
+        "windows-31j": "cp932",
+        "shift-jis": "cp932",
+        "shift_jis": "cp932",
+        "sjis": "cp932",
+    }
+    candidate = aliases.get(normalized, value)
+    try:
+        codecs.lookup(candidate)
+    except LookupError:
+        return "utf-8"
+    return candidate
+
+
 def fetch_html(url: str, timeout: int = 20) -> str:
     request = Request(url, headers={"User-Agent": "chitan-watch/0.1 source-discovery"})
     with urlopen(request, timeout=timeout) as response:
-        charset = response.headers.get_content_charset() or "utf-8"
+        charset = _safe_charset(response.headers.get_content_charset())
         return response.read().decode(charset, errors="replace")
 
 

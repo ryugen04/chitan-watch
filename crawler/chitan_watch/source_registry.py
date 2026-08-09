@@ -22,6 +22,10 @@ class SourceRegistryEntry:
     allowed_domains: tuple[str, ...]
     artifact_types: tuple[ArtifactType, ...]
     source_group: str
+    source_layer: str
+    source_owner: str
+    source_role: str
+    jurisdiction_scope: str
     monitor_mode: str
     notify_policy: str
     review_policy: str
@@ -57,6 +61,10 @@ def _entry_from_dict(raw: dict) -> SourceRegistryEntry:
         allowed_domains=_tuple(raw.get("allowed_domains")),
         artifact_types=tuple(ArtifactType(str(item)) for item in raw.get("artifact_types", ())),
         source_group=str(raw.get("source_group") or "source"),
+        source_layer=str(raw.get("source_layer") or raw.get("source_group") or "source"),
+        source_owner=str(raw.get("source_owner") or "unknown"),
+        source_role=str(raw.get("source_role") or raw.get("source_group") or "source"),
+        jurisdiction_scope=str(raw.get("jurisdiction_scope") or "national"),
         monitor_mode=str(raw.get("monitor_mode") or "file_hash"),
         notify_policy=str(raw.get("notify_policy") or "important_only"),
         review_policy=str(raw.get("review_policy") or "conditional"),
@@ -90,6 +98,14 @@ def _excluded(value: str, keywords: tuple[str, ...]) -> bool:
     return any(keyword.lower() in haystack for keyword in keywords)
 
 
+def _included(title: str, url: str, title_keywords: tuple[str, ...], url_keywords: tuple[str, ...]) -> bool:
+    if not title_keywords and not url_keywords:
+        return True
+    title_match = bool(title_keywords) and _matches(title, title_keywords)
+    url_match = bool(url_keywords) and _matches(url, url_keywords)
+    return title_match or url_match
+
+
 def _path_for_artifact(artifact_id: str, canonical_url: str, source_map: dict[str, str]) -> str:
     return source_map.get(artifact_id) or source_map.get(canonical_url) or canonical_url
 
@@ -103,6 +119,10 @@ def _spec_from_entry(entry: SourceRegistryEntry, canonical_url: str, title: str,
         canonical_url=canonical_url,
         path=_path_for_artifact(f"art_{digest}", canonical_url, source_map),
         source_group=entry.source_group,
+        source_layer=entry.source_layer,
+        source_owner=entry.source_owner,
+        source_role=entry.source_role,
+        jurisdiction_scope=entry.jurisdiction_scope,
         monitor_mode=entry.monitor_mode,
         notify_policy=entry.notify_policy,
         review_policy=entry.review_policy,
@@ -136,8 +156,7 @@ def registry_specs(
         )
         for item in discovered:
             artifact = item.artifact
-            combined = f"{artifact.title} {artifact.canonical_url}"
-            if not _matches(artifact.title, entry.include_title_keywords) and not _matches(artifact.canonical_url, entry.include_url_keywords):
+            if not _included(artifact.title, artifact.canonical_url, entry.include_title_keywords, entry.include_url_keywords):
                 continue
             if _excluded(artifact.title, entry.exclude_title_keywords) or _excluded(artifact.canonical_url, entry.exclude_url_keywords):
                 continue

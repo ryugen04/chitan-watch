@@ -120,6 +120,10 @@ def build_api_payload(path: str, store: LocalRunStore, site_url: str = "http://1
                     "sha256": record.snapshot.sha256 if record.snapshot else None,
                     "error": record.error,
                     "source_group": record.artifact.source_group,
+                    "source_layer": record.artifact.source_layer,
+                    "source_owner": record.artifact.source_owner,
+                    "source_role": record.artifact.source_role,
+                    "jurisdiction_scope": record.artifact.jurisdiction_scope,
                     "monitor_mode": record.artifact.monitor_mode,
                     "notify_policy": record.artifact.notify_policy,
                     "review_policy": record.artifact.review_policy,
@@ -127,10 +131,16 @@ def build_api_payload(path: str, store: LocalRunStore, site_url: str = "http://1
                 }
             )
         groups = {}
+        layers = {}
+        owners = {}
         for source in sources:
             group = source.get("source_group") or "uncategorized"
+            layer = source.get("source_layer") or "uncategorized"
+            owner = source.get("source_owner") or "unknown"
             groups[group] = groups.get(group, 0) + 1
-        return json_response({"latest_run_id": latest, "status": evaluation.get("status"), "source_groups": groups, "sources": sources})
+            layers[layer] = layers.get(layer, 0) + 1
+            owners[owner] = owners.get(owner, 0) + 1
+        return json_response({"latest_run_id": latest, "status": evaluation.get("status"), "source_groups": groups, "source_layers": layers, "source_owners": owners, "sources": sources})
     return None
 
 

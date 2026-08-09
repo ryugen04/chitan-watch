@@ -97,6 +97,10 @@ class Artifact:
     last_seen_at: str | None = None
     active: bool = True
     source_group: str | None = None
+    source_layer: str | None = None
+    source_owner: str | None = None
+    source_role: str | None = None
+    jurisdiction_scope: str | None = None
     monitor_mode: str | None = None
     notify_policy: str | None = None
     review_policy: str | None = None
