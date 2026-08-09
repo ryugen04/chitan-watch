@@ -1,19 +1,19 @@
 {
-  "version": 2,
+  "version": 3,
   "entries": [
     {
       "id": "ssk-titansys-page",
-      "title": "支払基金 地単公費マスター関連ページ",
+      "title": "支払基金 地単公費マスター情報の登録に関するお知らせ",
       "seed_url": "https://www.ssk.or.jp/seikyushiharai/titansys/index.html",
-      "source_id": "ssk-chitan",
+      "source_id": "ssk-chitan-master",
       "allowed_domains": [],
       "artifact_types": [
         "html"
       ],
-      "source_group": "source-page",
-      "source_layer": "master-publication",
+      "source_group": "master-latest-data",
+      "source_layer": "master-latest-data",
       "source_owner": "ssk",
-      "source_role": "master-publication-index",
+      "source_role": "primary-master-download-page",
       "jurisdiction_scope": "national",
       "monitor_mode": "source_health",
       "notify_policy": "health_only",
@@ -23,44 +23,33 @@
       "direct": true
     },
     {
-      "id": "ssk-titansys-official-materials",
-      "title": "支払基金 地単公費マスター公式資料",
+      "id": "ssk-titansys-latest-master-data",
+      "title": "支払基金 地単公費マスター最新データ",
       "seed_url": "https://www.ssk.or.jp/seikyushiharai/titansys/index.html",
-      "source_id": "ssk-chitan",
+      "source_id": "ssk-chitan-master",
       "allowed_domains": [
-        "www.ssk.or.jp",
-        "www.mhlw.go.jp"
+        "www.ssk.or.jp"
       ],
       "artifact_types": [
         "master_csv",
-        "master_excel",
-        "schema",
-        "input_guide",
-        "manual",
-        "examples",
-        "faq",
-        "mhlw_document",
-        "other"
+        "master_excel"
       ],
-      "source_group": "master-publication",
-      "source_layer": "master-publication",
+      "source_group": "master-latest-data",
+      "source_layer": "master-latest-data",
       "source_owner": "ssk",
-      "source_role": "public-master-materials",
+      "source_role": "confirmed-master-list-download",
       "jurisdiction_scope": "national",
-      "monitor_mode": "file_hash",
+      "monitor_mode": "semantic_or_file_diff",
       "notify_policy": "always",
-      "review_policy": "conditional",
+      "review_policy": "required",
       "evidence_level": "CONFIRMED",
       "freshness_sla": "daily",
       "include_title_keywords": [
-        "地単公費",
-        "地方単独",
-        "国公費",
-        "FAQ"
+        "地単公費マスター確定事業一覧"
       ],
       "include_url_keywords": [
-        "titansys/index.files",
-        "mhlw.go.jp/stf/"
+        "m_regional_publicly_funded_all",
+        "kakutei_chitan"
       ],
       "exclude_title_keywords": [
         "サイトマップ",
@@ -70,176 +59,65 @@
       "direct": false
     },
     {
-      "id": "ssk-chitan-context-page",
-      "title": "支払基金 地方単独医療費助成事業関連情報",
-      "seed_url": "https://www.ssk.or.jp/seikyushiharai/chitan/chitan_01.html",
-      "source_id": "ssk-chitan",
-      "allowed_domains": [],
-      "artifact_types": [
-        "html"
-      ],
-      "source_group": "policy-context",
-      "source_layer": "policy-context",
-      "source_owner": "ssk",
-      "source_role": "medical-subsidy-overview",
-      "jurisdiction_scope": "national",
-      "monitor_mode": "source_health",
-      "notify_policy": "health_only",
-      "review_policy": "conditional",
-      "evidence_level": "CONFIRMED",
-      "freshness_sla": "daily",
-      "direct": true
-    },
-    {
-      "id": "ssk-chitan-commissioned-status",
-      "title": "支払基金が受託している医療費助成事業",
-      "seed_url": "https://www.ssk.or.jp/seikyushiharai/chitan/jutaku/index.html",
-      "source_id": "ssk-chitan",
-      "allowed_domains": [],
-      "artifact_types": [
-        "html"
-      ],
-      "source_group": "claim-processing",
-      "source_layer": "claim-processing",
-      "source_owner": "ssk",
-      "source_role": "commissioned-claim-status",
-      "jurisdiction_scope": "national-by-prefecture",
-      "monitor_mode": "link_presence",
-      "notify_policy": "important_only",
-      "review_policy": "conditional",
-      "evidence_level": "CONFIRMED",
-      "freshness_sla": "daily",
-      "direct": true
-    },
-    {
-      "id": "mhlw-chitan-policy-page",
-      "title": "厚労省 国公費・地単公費マスタの変更・更新関連情報",
-      "seed_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html",
-      "source_id": "mhlw-chitan",
-      "allowed_domains": [],
-      "artifact_types": [
-        "mhlw_document"
-      ],
-      "source_group": "policy-context",
-      "source_layer": "policy-context",
-      "source_owner": "mhlw",
-      "source_role": "policy-and-explanatory-materials",
-      "jurisdiction_scope": "national",
-      "monitor_mode": "source_health",
-      "notify_policy": "important_only",
-      "review_policy": "conditional",
-      "evidence_level": "CONFIRMED",
-      "freshness_sla": "daily",
-      "direct": true
-    },
-    {
-      "id": "mhlw-iryouhijosei-online-qualification",
-      "title": "厚労省 医療費助成のオンライン資格確認",
-      "seed_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryou/iryouhijosei-iryoukikan.html",
-      "source_id": "mhlw-pmh",
-      "allowed_domains": [],
-      "artifact_types": [
-        "html"
-      ],
-      "source_group": "pmh-online-qualification",
-      "source_layer": "pmh-online-qualification",
-      "source_owner": "mhlw",
-      "source_role": "medical-institution-online-qualification-guide",
-      "jurisdiction_scope": "national",
-      "monitor_mode": "source_health",
-      "notify_policy": "health_only",
-      "review_policy": "conditional",
-      "evidence_level": "CONFIRMED",
-      "freshness_sla": "daily",
-      "direct": true
-    },
-    {
-      "id": "digital-agency-pmh-hub-page",
-      "title": "デジタル庁 Public Medical Hub",
-      "seed_url": "https://www.digital.go.jp/policies/health/public-medical-hub",
-      "source_id": "digital-agency-pmh",
-      "allowed_domains": [],
-      "artifact_types": [
-        "html"
-      ],
-      "source_group": "pmh-online-qualification",
-      "source_layer": "pmh-online-qualification",
-      "source_owner": "digital-agency",
-      "source_role": "pmh-program-overview",
-      "jurisdiction_scope": "national",
-      "monitor_mode": "source_health",
-      "notify_policy": "important_only",
-      "review_policy": "conditional",
-      "evidence_level": "CONFIRMED",
-      "freshness_sla": "daily",
-      "direct": true
-    },
-    {
-      "id": "digital-agency-pmh-public-materials",
-      "title": "デジタル庁 PMH 公開資料・制度関連マスタ",
-      "seed_url": "https://www.digital.go.jp/policies/health/public-medical-hub",
-      "source_id": "digital-agency-pmh",
+      "id": "ssk-titansys-registration-guidance",
+      "title": "支払基金 地単公費マスター登録・運用資料",
+      "seed_url": "https://www.ssk.or.jp/seikyushiharai/titansys/index.html",
+      "source_id": "ssk-chitan-master",
       "allowed_domains": [
-        "www.digital.go.jp",
-        "digital.go.jp"
+        "www.ssk.or.jp"
       ],
       "artifact_types": [
-        "master_csv",
-        "master_excel",
-        "other",
-        "html"
+        "schema",
+        "input_guide",
+        "manual",
+        "examples",
+        "faq",
+        "other"
       ],
-      "source_group": "pmh-online-qualification",
-      "source_layer": "pmh-online-qualification",
-      "source_owner": "digital-agency",
-      "source_role": "pmh-public-master-and-participation-files",
-      "jurisdiction_scope": "national-and-local",
+      "source_group": "master-registration-operation",
+      "source_layer": "master-registration-operation",
+      "source_owner": "ssk",
+      "source_role": "registration-guidance-and-validation-materials",
+      "jurisdiction_scope": "national",
       "monitor_mode": "file_hash",
       "notify_policy": "important_only",
       "review_policy": "conditional",
       "evidence_level": "CONFIRMED",
       "freshness_sla": "daily",
       "include_title_keywords": [
-        "制度関連マスタ",
-        "参加自治体",
-        "導入済み医療機関",
-        "医療機関・薬局リスト",
-        "公費負担者番号一覧"
+        "地単公費",
+        "FAQ",
+        "項目一覧",
+        "入力要領",
+        "入力例",
+        "マニュアル",
+        "委託状況"
       ],
-      "include_url_keywords": [],
+      "include_url_keywords": [
+        "titansys/index.files/siryo",
+        "titansys/index.files/itakujoukyou"
+      ],
       "exclude_title_keywords": [
-        "English",
-        "利用規約",
-        "API",
-        "仕様書",
-        "設計書",
-        "手順書",
-        "ポスター",
-        "チェックリスト",
-        "アーカイブ",
-        "PIA",
-        "差分履歴",
-        "ベンダ",
-        "共通算定",
-        "エラーコード",
-        "XML",
-        "テスト"
+        "確定事業一覧",
+        "サイトマップ",
+        "関連サイト",
+        "トップページ"
       ],
       "direct": false
     },
     {
-      "id": "shinryohoshu-seido-master",
-      "title": "診療報酬情報提供サービス 制度マスター",
-      "seed_url": "https://shinryohoshu.mhlw.go.jp/shinryohoshu/html/seido_master.jsp",
-      "source_id": "shinryohoshu-master",
+      "id": "mhlw-chitan-policy-page",
+      "title": "厚労省 国公費・地単公費マスターの変更・更新、現物給付化の取組",
+      "seed_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html",
+      "source_id": "mhlw-chitan-master",
       "allowed_domains": [],
       "artifact_types": [
         "html"
       ],
-      "source_group": "master-publication",
-      "source_layer": "master-publication",
-      "source_owner": "shinryohoshu",
-      "source_role": "national-seido-master-portal",
+      "source_group": "policy-faq",
+      "source_layer": "policy-faq",
+      "source_owner": "mhlw",
+      "source_role": "policy-background-and-faq-index",
       "jurisdiction_scope": "national",
       "monitor_mode": "source_health",
       "notify_policy": "important_only",
@@ -249,66 +127,90 @@
       "direct": true
     },
     {
-      "id": "sapporo-child-medical-subsidy",
-      "title": "札幌市 子ども医療費助成",
-      "seed_url": "https://www.city.sapporo.jp/hoken-iryo/iryojosei/nyuyoji.html",
-      "source_id": "municipality-sapporo",
+      "id": "mhlw-chitan-policy-materials",
+      "title": "厚労省 地単公費マスター説明会・FAQ資料",
+      "seed_url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html",
+      "source_id": "mhlw-chitan-master",
+      "allowed_domains": [
+        "www.mhlw.go.jp"
+      ],
+      "artifact_types": [
+        "mhlw_document",
+        "other",
+        "html"
+      ],
+      "source_group": "policy-faq",
+      "source_layer": "policy-faq",
+      "source_owner": "mhlw",
+      "source_role": "briefing-faq-and-policy-materials",
+      "jurisdiction_scope": "national",
+      "monitor_mode": "file_hash",
+      "notify_policy": "important_only",
+      "review_policy": "conditional",
+      "evidence_level": "CONFIRMED",
+      "freshness_sla": "daily",
+      "include_title_keywords": [
+        "地単公費",
+        "地方単独",
+        "全国説明会",
+        "自治体向け",
+        "FAQ",
+        "よくある",
+        "現物給付",
+        "マスタ",
+        "実態調査"
+      ],
+      "include_url_keywords": [
+        "iryouhoken/index_00030",
+        "newpage_67679"
+      ],
+      "exclude_title_keywords": [
+        "トップページ",
+        "サイトマップ",
+        "採用"
+      ],
+      "direct": false
+    },
+    {
+      "id": "shinryohoshu-seido-master",
+      "title": "診療報酬情報提供サービス 公費負担医療制度マスター",
+      "seed_url": "https://shinryohoshu.mhlw.go.jp/shinryohoshu/html/seido_master.jsp",
+      "source_id": "shinryohoshu-master",
       "allowed_domains": [],
       "artifact_types": [
         "html"
       ],
-      "source_group": "municipality-policy",
-      "source_layer": "municipality-policy",
-      "source_owner": "municipality",
-      "source_role": "municipality-benefit-rule-page",
-      "jurisdiction_scope": "sapporo-city",
+      "source_group": "reference-portal",
+      "source_layer": "reference-portal",
+      "source_owner": "shinryohoshu",
+      "source_role": "public-medical-master-reference-portal",
+      "jurisdiction_scope": "national",
       "monitor_mode": "source_health",
-      "notify_policy": "health_only",
+      "notify_policy": "important_only",
       "review_policy": "conditional",
       "evidence_level": "CONFIRMED",
-      "freshness_sla": "weekly",
+      "freshness_sla": "daily",
       "direct": true
     },
     {
-      "id": "yokohama-child-medical-subsidy",
-      "title": "横浜市 小児医療費助成",
-      "seed_url": "https://www.city.yokohama.lg.jp/kenko-iryo-fukushi/kenko-iryo/iryohijosei/shoni/child.html",
-      "source_id": "municipality-yokohama",
+      "id": "ssk-top-news",
+      "title": "支払基金トップ更新情報",
+      "seed_url": "https://www.ssk.or.jp/",
+      "source_id": "ssk-top-news",
       "allowed_domains": [],
       "artifact_types": [
         "html"
       ],
-      "source_group": "municipality-policy",
-      "source_layer": "municipality-policy",
-      "source_owner": "municipality",
-      "source_role": "municipality-benefit-rule-page",
-      "jurisdiction_scope": "yokohama-city",
+      "source_group": "site-news-health",
+      "source_layer": "site-news-health",
+      "source_owner": "ssk",
+      "source_role": "optional-top-news-health-check",
+      "jurisdiction_scope": "national",
       "monitor_mode": "source_health",
       "notify_policy": "health_only",
       "review_policy": "conditional",
-      "evidence_level": "CONFIRMED",
-      "freshness_sla": "weekly",
-      "direct": true
-    },
-    {
-      "id": "sumida-child-medical-subsidy",
-      "title": "墨田区 子ども医療費助成",
-      "seed_url": "https://www.city.sumida.lg.jp/kosodate_kyouiku/kosodate_site/teate_jyosei_shien/teate_zyosei/jyosei/nyuuyouji_iryouhi.html",
-      "source_id": "municipality-sumida",
-      "allowed_domains": [],
-      "artifact_types": [
-        "html"
-      ],
-      "source_group": "municipality-policy",
-      "source_layer": "municipality-policy",
-      "source_owner": "municipality",
-      "source_role": "municipality-benefit-rule-page",
-      "jurisdiction_scope": "sumida-city",
-      "monitor_mode": "source_health",
-      "notify_policy": "health_only",
-      "review_policy": "conditional",
-      "evidence_level": "CONFIRMED",
-      "freshness_sla": "weekly",
+      "evidence_level": "INFERRED",
+      "freshness_sla": "daily",
       "direct": true
     }
   ]

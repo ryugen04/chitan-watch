@@ -242,6 +242,11 @@ def _artifact_kind_label(artifact_type: ArtifactType) -> str:
 
 
 SOURCE_LAYER_LABELS = {
+    "master-latest-data": "地単公費マスター最新データ",
+    "master-registration-operation": "登録・運用資料",
+    "policy-faq": "制度背景・説明会・FAQ",
+    "reference-portal": "公費負担医療制度マスター入口",
+    "site-news-health": "公式サイト更新情報の補助確認",
     "policy-context": "制度・政策文脈",
     "pmh-online-qualification": "PMH/オンライン資格確認",
     "master-publication": "地単公費マスター公開",
@@ -288,6 +293,20 @@ def _source_context(change: ArtifactRunChange) -> dict[str, str]:
 
 def _artifact_likely_impact(change: ArtifactRunChange) -> tuple[str, ...]:
     layer = change.source_layer or ""
+    if layer == "master-latest-data":
+        if change.artifact_type == ArtifactType.MASTER_CSV:
+            return ("最新データの基準日、CSV ファイル名、ファイル差分、行差分を確認し、現物給付の患者負担金計算に関係する変更か検証が必要です。",)
+        if change.artifact_type == ArtifactType.MASTER_EXCEL:
+            return ("人が確認する Excel 版の更新です。CSV と同じ基準日の確定事業一覧か、ファイル名・サイズ・内容差分を確認してください。",)
+        return ("地単公費マスター最新データの入口やリンク構成が変わった可能性があります。",)
+    if layer == "master-registration-operation":
+        return ("自治体の新規登録・変更・廃止、変更6か月前の月末までの登録対応、項目定義、入力要領、FAQ、検証前提に関する運用資料が変わった可能性があります。",)
+    if layer == "policy-faq":
+        return ("厚労省の説明会資料、FAQ、対象範囲、現物給付化や自治体向け依頼内容が変わった可能性があります。",)
+    if layer == "reference-portal":
+        return ("診療報酬情報提供サービス側の公費負担医療制度マスター入口や、支払基金ページへの導線が変わった可能性があります。",)
+    if layer == "site-news-health":
+        return ("支払基金トップ更新情報の補助確認です。本命は titansys ページ側で、トップ掲載有無だけでは更新有無を確定しません。",)
     if layer == "pmh-online-qualification":
         return ("マイナンバーカードによる医療費助成資格確認、PMH 参加自治体、制度関連マスタ、医療機関導入状況の確認が必要な可能性があります。",)
     if layer == "municipality-policy":
@@ -331,7 +350,7 @@ def interpretation_for_artifact_change(change: ArtifactRunChange, evidence: tupl
         headline=f"{layer}: {kind} {change.title} の{action}",
         summary=f"{owner} の {layer} レイヤーで監視している公式ソースの状態変化です。",
         likely_impact=_artifact_likely_impact(change),
-        recommended_action="詳細ページから公式ソース、ソース層、検知内容を確認し、制度変更、PMH/資格確認、マスター公開、請求運用、自治体個別制度のどれに当たるかを切り分けてください。",
+        recommended_action="詳細ページから公式ソース、ソース層、基準日、ファイル名、ファイル差分、CSV 行差分を確認し、現物給付マスター更新・登録運用資料・説明会/FAQ更新のどれに当たるかを切り分けてください。",
         confidence=EvidenceLevel.CONFIRMED,
         evidence_level=_evidence_level(evidence),
         needs_review=change.review_policy == "required",

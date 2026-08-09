@@ -12,39 +12,53 @@ const fallbackState = {
   ],
   changes: [
     {
-      id: "chg_fixture_tokyo_age",
+      id: "chg_fixture_ssk_master_csv",
       run_id: "fixture-run",
-      severity: "HIGH",
-      detected_at: "2026-08-09T00:05:00+00:00",
-      effective_from: "2026-04-01",
-      jurisdiction: { prefecture_code: "13", municipality_code: "131016" },
-      program: { name: "こども医療費助成", public_funding_number: "80130001", classification: "1" },
-      change_categories: ["master-row-modified", "validity-period"],
-      vendor_impacts: ["master-import", "eligibility-determination", "patient-registration"],
-      summary: "こども医療費助成 の地単公費マスター差分: row_modified",
-      evidence: [
-        { type: "master_field_diff", evidence_level: "CONFIRMED", field: "item_1", before: "こども医療費助成", after: "こども医療費助成 改定", source_url: "fixture" },
-      ],
-      review_required: false,
-    },
-    {
-      id: "chg_fixture_review",
-      run_id: "fixture-run",
-      severity: "HIGH",
+      severity: "LOW",
       detected_at: "2026-08-09T00:05:00+00:00",
       effective_from: null,
-      jurisdiction: { prefecture_code: "13", municipality_code: "131050" },
-      program: { name: "重複制度", public_funding_number: "80130005", classification: "1" },
-      change_categories: ["admin-review", "ambiguous-master-row-match"],
-      vendor_impacts: ["master-import", "admin-review"],
-      summary: "重複制度 の地単公費マスター差分: row_ambiguous",
-      evidence: [{ type: "ambiguous_master_match", evidence_level: "UNRESOLVED", description: "Business identity requires Admin Review", source_url: "fixture" }],
+      jurisdiction: { prefecture_code: "--", municipality_code: "" },
+      program: { name: "地単公費マスター確定事業一覧", public_funding_number: "", classification: "master-latest-data" },
+      change_categories: ["artifact-added", "source-layer:master-latest-data", "artifact-type:master_csv"],
+      vendor_impacts: ["master-import", "validation-required"],
+      summary: "支払基金の地単公費マスター確定事業一覧 CSV が更新候補として検知されました。基準日、ファイル名、サイズ、CSV 行差分を確認してください。",
+      interpretation: {
+        headline: "支払基金の確定事業一覧 CSV 更新候補",
+        summary: "地単公費マスター最新データの CSV/Excel リンクまたはファイル内容に変化がある想定です。通知は公式更新の検知であり、本番反映の指示ではありません。",
+        recommended_action: "支払基金 titansys の確定事業一覧を開き、基準日、CSV ファイル名、ファイルサイズ、行差分を確認してください。医事会計システムで使う場合は同値性テストが必要です。",
+        confidence: "CONFIRMED",
+        likely_impact: ["CSV 取込対象の確認", "患者負担金計算への影響確認", "同値性テストの要否判断"],
+      },
+      evidence: [
+        { type: "official_artifact", evidence_level: "CONFIRMED", field: "source_layer", before: "", after: "master-latest-data", description: "支払基金 titansys の確定事業一覧 CSV/Excel を監視するサンプルです。" },
+      ],
       review_required: true,
+    },
+    {
+      id: "chg_fixture_mhlw_faq",
+      run_id: "fixture-run",
+      severity: "INFO",
+      detected_at: "2026-08-09T00:05:00+00:00",
+      effective_from: null,
+      jurisdiction: { prefecture_code: "--", municipality_code: "" },
+      program: { name: "厚労省 説明会・FAQ", public_funding_number: "", classification: "policy-faq" },
+      change_categories: ["document-update", "source-layer:policy-faq"],
+      vendor_impacts: ["policy-review", "admin-review"],
+      summary: "厚労省の地単公費マスター関連説明会・FAQ 資料の更新候補です。対象範囲や登録運用の説明変更を確認してください。",
+      interpretation: {
+        headline: "厚労省の説明会・FAQ 更新候補",
+        summary: "制度背景や自治体向け説明の資料更新を検知する想定です。CSV 本体の差分とは分けて読みます。",
+        recommended_action: "厚労省ページで説明会資料、FAQ、対象範囲、登録運用の記述を確認し、支払基金データ本体への影響有無を切り分けてください。",
+        confidence: "INFO",
+        likely_impact: ["運用ルールの確認", "自治体向け説明の変更確認"],
+      },
+      evidence: [{ type: "official_document", evidence_level: "INFO", description: "厚労省 index_00030 配下の説明会・FAQ を監視するサンプルです。", source_url: "fixture" }],
+      review_required: false,
     },
   ],
   sources: [
-    { artifact_id: "art_master_csv", title: "Master CSV", type: "master_csv", state: "changed", sha256: "fixture", error: null, source_group: "master-publication", source_layer: "master-publication", source_owner: "ssk", source_role: "public-master-materials", jurisdiction_scope: "national", monitor_mode: "semantic_diff", notify_policy: "always", review_policy: "conditional" },
-    { artifact_id: "art_pmh", title: "PMH public materials", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "pmh-online-qualification", source_layer: "pmh-online-qualification", source_owner: "digital-agency", source_role: "pmh-program-overview", jurisdiction_scope: "national", monitor_mode: "source_health", notify_policy: "important_only", review_policy: "conditional" },
+    { artifact_id: "art_master_csv", title: "Master CSV", type: "master_csv", state: "changed", sha256: "fixture", error: null, source_group: "master-latest-data", source_layer: "master-latest-data", source_owner: "ssk", source_role: "confirmed-master-list-download", jurisdiction_scope: "national", monitor_mode: "semantic_or_file_diff", notify_policy: "always", review_policy: "required" },
+    { artifact_id: "art_mhlw_faq", title: "MHLW FAQ", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "policy-faq", source_layer: "policy-faq", source_owner: "mhlw", source_role: "policy-background-and-faq-index", jurisdiction_scope: "national", monitor_mode: "source_health", notify_policy: "important_only", review_policy: "conditional" },
   ],
   latest_run_id: "fixture-run",
   apiOnline: false,
@@ -205,121 +219,89 @@ function renderMaster() {
 }
 
 function renderGuide() {
-  return `<section class="guide-panel">
-    <section class="guide-intro">
+  return `<section class="guide">
+    <section class="guide-section guide-wide">
       <p class="eyebrow">公費制度ガイド</p>
-      <p class="lead">Chitan Watch は、地方自治体の医療費助成制度に関わる地単公費マスターの公開資料を追い、変更候補を理解しやすい形で届けるための静的監視サイトです。</p>
-      <p>初めて見る人が迷いやすいのは、通知そのものよりも「公費とは何か」「マスターのどの列が業務に効くのか」「公式ファイルの更新をどこまで信じてよいのか」です。このページでは、その前提から順に整理します。</p>
+      <p class="lead">Chitan Watch は、支払基金・厚労省側で公開される地単公費マスターと関連説明資料を追い、更新確認の入口を RSS と静的ページで届けるための監視サイトです。</p>
+      <p>今回の対象は「自治体の医療費助成制度を全部集めたカタログ」ではありません。現物給付の患者負担金計算に使う地単公費マスターを、どこで見て、何を対象とし、どう更新を追うかに絞っています。Source Registry は、その公式ページと資料を役割ごとに管理するための地図です。</p>
     </section>
     <section class="guide-section guide-wide">
-      <h2>公費制度の入口</h2>
-      <p>医療機関の窓口では、健康保険だけでなく、国や自治体の助成制度によって患者負担が軽くなることがあります。地単公費は、地方自治体が独自に実施する医療費助成事業を扱う領域です。こども医療、ひとり親家庭、重度心身障害者など、自治体ごとに名称、対象者、負担方法、開始日が異なります。</p>
-      <p>支払基金の地単公費関連ページは、地単公費マスターの公開・登録運用を見るうえで重要です。ただし、制度全体の正を支払基金だけに置くことはできません。PMH、診療報酬情報提供サービス、厚労省、審査支払機関、自治体個別ページを別々の情報層として見ます。</p>
-    </section>
-    <section class="guide-section guide-wide">
-      <h2>全体像</h2>
+      <h2>まず見るページ</h2>
       <ol class="flow-list">
-        <li><strong>制度</strong><span>自治体が医療費助成事業を設計します。対象者、自己負担、所得制限、現物給付か償還払いかといった運用条件が制度の中身です。</span></li>
-        <li><strong>マスター</strong><span>制度を医療機関やシステムが扱えるよう、公費負担者番号、制度名、都道府県や市町村、施行日、分類などの行データにします。</span></li>
-        <li><strong>公式ソース</strong><span>支払基金、PMH、診療報酬情報提供サービス、厚労省、自治体サイトが、それぞれ別の役割で情報を出します。どの層の更新かを分けて読む必要があります。</span></li>
-        <li><strong>検知</strong><span>GitHub Actions が公開ページを確認し、前回保存したファイルやマスター行と比べます。ファイル追加、更新、削除、行変更を change として記録します。</span></li>
-        <li><strong>判断</strong><span>通知は作業命令ではありません。担当システムの取込対象か、公式資料で根拠を確認できるか、社内手順に進めるかを人が判断します。</span></li>
+        <li><strong>支払基金</strong><span>地単公費マスター情報の登録に関するお知らせ。実ファイルの取得元であり、確定事業一覧の Excel / CSV が置かれるデータ本体の本命ページです。</span></li>
+        <li><strong>厚労省</strong><span>国公費・地単公費マスターの変更・更新、現物給付化の取組。制度背景、説明会資料、FAQ、自治体向け説明を見るページで、実データ取得元とは分けます。</span></li>
+        <li><strong>診療報酬情報提供サービス</strong><span>公費負担医療制度マスターの入口。国公費マスター・地単公費マスターの位置づけと、支払基金ページへの導線を確認します。</span></li>
       </ol>
     </section>
     <div class="guide-grid">
       <article class="guide-section">
-        <h2>地単公費マスターとは</h2>
-        <p>制度をコンピューターが扱うための一覧表です。自治体名や制度名だけでは請求処理に使いにくいため、公費負担者番号、制度分類、適用期間などをそろえた形で管理します。</p>
+        <h2>地単公費マスターの対象</h2>
+        <p>地方公共団体の医療費等助成事業のうち、併用レセプトまたは連記式医療費明細書による現物給付の制度が中心です。受給者証の券面記載事項の要件を使い、患者負担金を計算できるように作成されています。</p>
       </article>
       <article class="guide-section">
-        <h2>行データの見方</h2>
-        <dl class="term-list">
-          <div><dt>公費負担者番号</dt><dd>制度を識別するための番号です。請求、資格確認、マスター取込で重要なキーになります。</dd></div>
-          <div><dt>自治体コード</dt><dd>都道府県や市町村を表します。同じ制度名でも自治体が違えば別の扱いになります。</dd></div>
-          <div><dt>施行日</dt><dd>制度やマスター行がいつから効くかを示します。通知日と施行日は別の概念です。</dd></div>
-        </dl>
+        <h2>対象外</h2>
+        <p>償還払い制度はこのマスターには含まれません。地単公費マスターに載っていないことは、自治体制度が存在しないことを意味しません。現物給付・併用レセプト・連記式医療費明細書の枠に入るかを分けて見ます。</p>
       </article>
       <article class="guide-section">
-        <h2>現物給付と償還払い</h2>
-        <p>現物給付は、窓口や請求の時点で助成を反映する運用です。償還払いは、患者がいったん支払い、後から自治体へ申請して払い戻しを受ける運用です。マスター監視で特に問題になりやすいのは、システム処理に乗る現物給付側です。</p>
+        <h2>最新データの見方</h2>
+        <p>リンク文言やファイル名に含まれる「令和X年X月X日時点」を最初に見ます。人が確認するなら Excel、差分検知や自動処理には CSV を使います。CSV ファイル名の日付、ファイルサイズ、ハッシュ、行差分を確認します。</p>
       </article>
       <article class="guide-section">
-        <h2>Chitan Watch の設計</h2>
-        <p>サイトはサーバーを持たず、GitHub Pages で静的ファイルとして公開します。Source Registry は URL の一覧ではなく、source_layer、source_owner、source_role、notify_policy を持つ情報地図です。RSS は利用者が読むべき変化に絞り、health_only の seed は Source Health で見ます。</p>
+        <h2>確定事業一覧</h2>
+        <p>見るべき本体は「地単公費マスター確定事業一覧」です。暫定的な入力フォームや説明資料と混ぜません。ただし医事会計システムやレセコンで利用する場合は、同値性テストなど必要な検証を実施した上で使います。</p>
+      </article>
+      <article class="guide-section">
+        <h2>更新のリードタイム</h2>
+        <p>自治体の新規制度登録、登録内容変更、廃止は Web フォームで行われます。新規開始や既存制度変更は、原則として変更6か月前の月末までに更新対応する前提です。通知日、ファイル基準日、制度施行日は別の概念なので、公開が施行前に見える場合も、既存資料の更新として見える場合もあります。</p>
+      </article>
+      <article class="guide-section">
+        <h2>説明会・FAQ</h2>
+        <p>厚労省ページでは、全国説明会、自治体向け説明会、実態調査、よくあるご質問を見ます。データ本体の差分ではなく、対象範囲、登録運用、自治体への依頼内容が変わっていないかを確認する層です。</p>
+      </article>
+      <article class="guide-section">
+        <h2>現在の監視範囲</h2>
+        <p>MVP の active watch は、支払基金の titansys ページ、確定事業一覧 CSV/Excel、登録・運用資料、厚労省の変更・更新ページ、診療報酬情報提供サービスの制度マスター入口です。支払基金トップ更新情報は補助 health として見ます。</p>
+      </article>
+      <article class="guide-section">
+        <h2>今は見ないもの</h2>
+        <p>PMH と自治体個別ページは重要な隣接領域ですが、この slice の RSS 主対象ではありません。自治体制度全体の網羅ではなく、支払基金・厚労省側の地単公費マスター更新を追うことに集中します。</p>
       </article>
       <article class="guide-section">
         <h2>情報層の分け方</h2>
         <dl class="term-list">
-          <div><dt>policy-context</dt><dd>厚労省や支払基金が出す制度背景、説明会、運用方針です。</dd></div>
-          <div><dt>pmh-online-qualification</dt><dd>マイナンバーカードで医療費助成資格を確認する PMH 関連情報です。</dd></div>
-          <div><dt>master-publication</dt><dd>地単公費マスター、項目一覧、入力要領、FAQ などの公開資料です。</dd></div>
-          <div><dt>claim-processing</dt><dd>審査支払機関への委託状況や請求運用の文脈です。</dd></div>
-          <div><dt>municipality-policy</dt><dd>自治体個別の制度説明、受給者証、対象者、自己負担の情報です。</dd></div>
+          <div><dt>master-latest-data</dt><dd>確定事業一覧の Excel / CSV と基準日を追う本命レイヤーです。</dd></div>
+          <div><dt>master-registration-operation</dt><dd>項目一覧、入力要領、入力例、FAQ、登録・変更・廃止の運用資料です。</dd></div>
+          <div><dt>policy-faq</dt><dd>厚労省の説明会、制度背景、FAQ、自治体向け説明です。</dd></div>
+          <div><dt>reference-portal</dt><dd>診療報酬情報提供サービス側の公費負担医療制度マスター入口です。</dd></div>
+          <div><dt>site-news-health</dt><dd>支払基金トップ更新情報の補助確認です。本命は titansys ページです。</dd></div>
         </dl>
-      </article>
-      <article class="guide-section">
-        <h2>現在の監視範囲</h2>
-        <p>MVP では、支払基金のマスター公開資料だけでなく、PMH/オンライン資格確認、診療報酬情報提供サービスの制度マスター入口、厚労省の政策・医療機関向けページ、自治体個別制度ページの seed も監視します。自治体ページは当面 Source Health 中心で、全国網羅ではなく公式裏取りの型を作る段階です。</p>
-      </article>
-      <article class="guide-section">
-        <h2>データの構造</h2>
-        <dl class="term-list">
-          <div><dt>run</dt><dd>ある時点のクロール実行です。取得時刻、成功状態、検知数、ソース状態を持ちます。</dd></div>
-          <div><dt>source</dt><dd>確認対象の公式ページや公開ファイルです。取得失敗やハッシュ変化もここで見ます。</dd></div>
-          <div><dt>change</dt><dd>利用者が読む通知単位です。severity、confidence、evidence、recommended action を持ちます。</dd></div>
-          <div><dt>evidence</dt><dd>変更候補の根拠です。差分項目、前後値、公式ソース URL、確認レベルを残します。</dd></div>
-        </dl>
-      </article>
-      <article class="guide-section">
-        <h2>解釈の境界</h2>
-        <p>現在の公開版では、外部 LLM に判断を任せていません。見出し、想定影響、推奨対応、確度はルールベースで付けています。制度の最終判断、請求可否、施設ごとの運用判断は公式資料と社内手順で確認します。</p>
       </article>
       <article class="guide-section">
         <h2>通知で見る順番</h2>
+        <p>RSS は公式ページやファイルの変化を知らせる入口です。制度変更の確定判断、本番マスター反映、ベンダー作業指示を自動で意味するものではありません。Severity は確認優先度、Review は人の確認要否、確度は根拠の強さ、health-only は取得状態の補助確認として読みます。</p>
         <ol>
-          <li>対象の自治体、制度名、ファイル名を確認します。</li>
-          <li>施行日と検知日時を分けて見ます。</li>
-          <li>確度、想定影響、推奨対応を読みます。</li>
-          <li>Detail の根拠と公式ソースを確認します。</li>
+          <li>ソース層が master-latest-data か policy-faq かを確認します。</li>
+          <li>基準日、CSV/Excel ファイル名、ファイルサイズ、検知日時を見ます。</li>
+          <li>CSV 行差分があれば、公費負担者番号、自治体、制度名、適用期間を見ます。</li>
+          <li>説明会・FAQ 更新なら、運用ルールや対象範囲の変更かを確認します。</li>
         </ol>
       </article>
       <article class="guide-section">
-        <h2>確度の意味</h2>
-        <dl class="term-list">
-          <div><dt>CONFIRMED</dt><dd>公式ソースや差分から変更候補を確認できた状態です。業務反映の前には対象システムとの対応を確認します。</dd></div>
-          <div><dt>UNRESOLVED</dt><dd>候補はありますが、対応関係や行の同一性に人の確認が必要な状態です。</dd></div>
-          <div><dt>INFO</dt><dd>参考情報として扱う通知です。すぐに更新作業へ進むとは限りません。</dd></div>
-        </dl>
-      </article>
-      <article class="guide-section">
-        <h2>更新の流れ</h2>
-        <p>自治体側の制度変更があり、公式資料が更新され、Chitan Watch が差分を検知し、RSS と画面に反映されます。通知が来た時点では、制度変更そのものがすでに始まっている場合も、将来の施行に向けた準備期間の場合もあります。</p>
-      </article>
-      <article class="guide-section">
-        <h2>業務での受け止め方</h2>
-        <p>通知は「調べるべき候補」を早く見つけるためのものです。マスター取込、資格確認、患者登録、請求点検のどれに関係するかを切り分け、施設やベンダーの更新手順に沿って扱います。</p>
-      </article>
-      <article class="guide-section">
-        <h2>再通知と実変更</h2>
-        <p>再通知は、同じ変更候補を改めて知らせるものです。実変更は、公開元の内容やファイルが前回確認時から変わったものです。再通知だけであれば、すぐにマスター更新が必要とは限りません。</p>
+        <h2>解釈の境界</h2>
+        <p>現在の公開版では、外部 LLM に判断を任せていません。見出し、想定影響、推奨対応、確度はルールベースです。公開 CSV をそのまま本番反映するのではなく、差分確認、計算影響確認、同値性テストを前提に扱います。</p>
       </article>
       <article class="guide-section">
         <h2>よくある読み違い</h2>
-        <p>公費負担者番号だけで制度や作業内容を決めると、自治体、適用期間、制度分類の違いを見落とします。ファイルの公開日、検知日時、施行日も別の意味を持ちます。</p>
-      </article>
-      <article class="guide-section">
-        <h2>具体例</h2>
-        <p>「地単公費マスター確定事業一覧」の CSV が追加された通知なら、まず自施設が取り込む対象かを見ます。マスター行変更なら、公費負担者番号、制度名、自治体、施行日、差分項目を Detail で確認します。</p>
+        <p>地単公費マスターは、自治体医療費助成制度を全部網羅する制度カタログではありません。償還払い制度や、現物給付・併用レセプト・連記式医療費明細書の枠に入らない制度は対象外になり得ます。</p>
       </article>
     </div>
     <section class="guide-section guide-wide">
       <h2>情報源</h2>
       <ul class="source-list">
-        <li><a href="https://www.ssk.or.jp/seikyushiharai/titansys/index.html" target="_blank" rel="noopener">社会保険診療報酬支払基金 地単公費マスター関連ページ</a></li>
-        <li><a href="https://www.digital.go.jp/policies/health/public-medical-hub" target="_blank" rel="noopener">デジタル庁 Public Medical Hub</a></li>
-        <li><a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryou/iryouhijosei-iryoukikan.html" target="_blank" rel="noopener">厚生労働省 医療費助成のオンライン資格確認</a></li>
-        <li><a href="https://shinryohoshu.mhlw.go.jp/shinryohoshu/html/seido_master.jsp" target="_blank" rel="noopener">診療報酬情報提供サービス 制度マスター</a></li>
-        <li><a href="https://www.ssk.or.jp/seikyushiharai/chitan/jutaku/index.html" target="_blank" rel="noopener">支払基金が受託している医療費助成事業</a></li>
+        <li><a href="https://www.ssk.or.jp/seikyushiharai/titansys/index.html" target="_blank" rel="noopener">社会保険診療報酬支払基金 地単公費マスター情報の登録に関するお知らせ</a></li>
+        <li><a href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/iryouhoken/index_00030.html" target="_blank" rel="noopener">厚生労働省 国公費・地単公費マスターの変更・更新、現物給付化の取組</a></li>
+        <li><a href="https://shinryohoshu.mhlw.go.jp/shinryohoshu/html/seido_master.jsp" target="_blank" rel="noopener">診療報酬情報提供サービス 公費負担医療制度マスター</a></li>
+        <li><a href="https://www.ssk.or.jp/" target="_blank" rel="noopener">社会保険診療報酬支払基金 トップ更新情報</a></li>
       </ul>
     </section>
   </section>`;

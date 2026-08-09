@@ -103,10 +103,10 @@ class StaticExportTest(unittest.TestCase):
         self.assertIn("static/changes.json", app_js)
         self.assertIn("Static export", app_js)
         self.assertIn("renderGuide", app_js)
-        self.assertIn("公費制度の入口", app_js)
-        self.assertIn("地単公費マスターとは", app_js)
-        self.assertIn("GitHub Pages で静的ファイル", app_js)
-        self.assertIn("通知は作業命令ではありません", app_js)
+        self.assertIn("まず見るページ", app_js)
+        self.assertIn("地単公費マスターの対象", app_js)
+        self.assertIn("償還払い制度はこのマスターには含まれません", app_js)
+        self.assertIn("公開 CSV をそのまま本番反映するのではなく", app_js)
 
 
 if __name__ == "__main__":
