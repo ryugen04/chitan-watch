@@ -82,9 +82,17 @@ class StaticExportTest(unittest.TestCase):
             replay = next(item for item in items if item.findtext("guid", "").endswith(":replay:manual-001"))
             original_guid = replay.findtext("guid").removesuffix(":replay:manual-001")
             original = next(item for item in items if item.findtext("guid") == original_guid)
-            self.assertIn("Manual delivery replay", replay.findtext("title"))
+            description = replay.findtext("description") or ""
+            self.assertIn("【再通知】", replay.findtext("title"))
             self.assertEqual(original.findtext("link"), replay.findtext("link"))
-            self.assertIn("Manual delivery replay", replay.findtext("description"))
+            self.assertIn("これは通知動作確認のための再通知です。", description)
+            self.assertIn("新しい変更を検知した通知ではありません。", description)
+            self.assertIn("対象:", description)
+            self.assertIn("重要度: ", description)
+            self.assertIn("詳細: https://example.test/chitan-watch/#change-detail/", description)
+            self.assertNotIn("artifact_snapshot", description)
+            self.assertNotIn("Manual delivery replay", description)
+            self.assertNotIn("->", description)
             self.assertIn("manual-replay", [node.text for node in replay.findall("category")])
 
     def test_web_app_references_static_json_fallback(self):

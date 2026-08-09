@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import format_datetime
-from html import escape
 from pathlib import Path
 from typing import Iterable
 from urllib.parse import quote
@@ -26,7 +25,7 @@ class RssFeedOptions:
     replay_latest_item: bool = False
     replay_nonce: str | None = None
     replay_detected_at: str | None = None
-    replay_label: str = "Manual delivery replay"
+    replay_label: str = "再通知"
 
 
 def _parse_datetime(value: str | None) -> datetime:
@@ -64,36 +63,85 @@ def _event_sort_key(event: dict) -> tuple[str, str]:
     return (str(event.get("detected_at") or ""), str(event.get("id") or ""))
 
 
-def _item_description(event: dict) -> str:
-    impacts = ", ".join(event.get("vendor_impacts") or ()) or "none"
-    categories = ", ".join(event.get("change_categories") or ()) or "none"
-    evidence = event.get("evidence") or []
-    evidence_lines = []
-    for item in evidence[:5]:
-        field = item.get("field") or item.get("type") or "evidence"
-        before = item.get("before")
-        after = item.get("after")
-        level = item.get("evidence_level") or ""
-        if before is not None or after is not None:
-            evidence_lines.append(f"{field}: {before} -> {after} ({level})")
-        else:
-            evidence_lines.append(f"{field}: {item.get('description', '')} ({level})")
-    replay_label = event.get("rss_replay_label")
-    parts = []
-    if replay_label:
-        parts.append(f"<p><strong>{escape(str(replay_label))}:</strong> Existing real detected data replayed for delivery verification.</p>")
-    parts.extend([
-        f"<p>{escape(str(event.get('summary') or ''))}</p>",
-        f"<p><strong>Severity:</strong> {escape(str(event.get('severity') or ''))}</p>",
-        f"<p><strong>Categories:</strong> {escape(categories)}</p>",
-        f"<p><strong>Vendor impacts:</strong> {escape(impacts)}</p>",
-    ])
-    if evidence_lines:
-        parts.append("<ul>" + "".join(f"<li>{escape(line)}</li>" for line in evidence_lines) + "</ul>")
-    if event.get("review_required"):
-        parts.append("<p><strong>Admin Review required.</strong></p>")
-    return "".join(parts)
+JST = timezone(timedelta(hours=9))
 
+SEVERITY_LABELS = {
+    "CRITICAL": "緊急",
+    "HIGH": "高",
+    "MEDIUM": "中",
+    "LOW": "低",
+    "INFO": "参考",
+}
+
+CATEGORY_LABELS = {
+    "artifact-added": "公開ファイルを検知",
+    "artifact-changed": "公開ファイルの更新を検知",
+    "artifact-removed": "公開ファイルの削除を検知",
+    "master-row-added": "マスター行の追加",
+    "master-row-modified": "マスター行の変更",
+    "master-row-removed": "マスター行の削除",
+    "manual-replay": "通知動作確認の再通知",
+}
+
+
+def _program_name(event: dict) -> str:
+    program = event.get("program") or {}
+    return str(program.get("name") or "地単公費マスター")
+
+
+def _severity_label(value: object | None) -> str:
+    raw = str(value or "INFO").upper()
+    return SEVERITY_LABELS.get(raw, raw)
+
+
+def _category_label(value: object) -> str | None:
+    return CATEGORY_LABELS.get(str(value))
+
+
+def _format_jst(value: str | None) -> str:
+    return _parse_datetime(value).astimezone(JST).strftime("%Y-%m-%d %H:%M JST")
+
+
+def _event_action_sentence(event: dict) -> str:
+    categories = set(event.get("change_categories") or ())
+    if "artifact-added" in categories:
+        return "社会保険診療報酬支払基金の公開ファイルを検知しました。"
+    if "artifact-changed" in categories:
+        return "社会保険診療報酬支払基金の公開ファイル更新を検知しました。"
+    if "artifact-removed" in categories:
+        return "社会保険診療報酬支払基金の公開ファイル削除を検知しました。"
+    if any(str(category).startswith("master-row-") for category in categories):
+        return "地単公費マスターの内容変更を検知しました。"
+    return "地単公費マスターに関する変更を検知しました。"
+
+
+def _item_description(event: dict, detail_link: str) -> str:
+    categories = [label for category in event.get("change_categories") or () if (label := _category_label(category))]
+    replay_label = event.get("rss_replay_label")
+    lines = []
+    if replay_label:
+        lines.extend([
+            "これは通知動作確認のための再通知です。新しい変更を検知した通知ではありません。",
+            "元になっている実データは、過去に検知済みの公式ソース由来の項目です。",
+        ])
+    else:
+        lines.append(_event_action_sentence(event))
+    lines.extend([
+        f"対象: {_program_name(event)}",
+        f"重要度: {_severity_label(event.get('severity'))}",
+        f"検知日時: {_format_jst(event.get('detected_at'))}",
+    ])
+    if event.get("effective_from"):
+        lines.append(f"施行日: {event.get('effective_from')}")
+    if categories:
+        lines.append(f"分類: {'、'.join(categories)}")
+    if event.get("review_required"):
+        lines.append("確認: 管理者レビューが必要です。")
+    lines.extend([
+        f"詳細: {detail_link}",
+        "出典: 社会保険診療報酬支払基金",
+    ])
+    return "\n".join(lines)
 
 
 def _replay_latest_event(events: list[dict], options: RssFeedOptions) -> list[dict]:
@@ -128,9 +176,9 @@ def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFee
         item = ET.SubElement(channel, "item")
         program = event.get("program") or {}
         jurisdiction = event.get("jurisdiction") or {}
-        title = f"[{event.get('severity', 'INFO')}] {program.get('name') or '地単公費マスター'}"
+        title = f"【地単公費マスター更新】{program.get('name') or '地単公費マスター'}"
         if event.get("rss_replay_label"):
-            title = f"{event.get('rss_replay_label')}: {title}"
+            title = f"【再通知】{program.get('name') or '地単公費マスター'}"
         place = "-".join(part for part in (jurisdiction.get("prefecture_code"), jurisdiction.get("municipality_code")) if part)
         if place:
             title = f"{title} / {place}"
@@ -141,7 +189,7 @@ def rss_xml_from_events(events: Iterable[dict], options: RssFeedOptions = RssFee
         guid = _text(item, "guid", str(event.get("id") or link))
         guid.set("isPermaLink", "false")
         _text(item, "pubDate", _rfc2822(event.get("detected_at")))
-        _text(item, "description", _item_description(event))
+        _text(item, "description", _item_description(event, link))
         _text(item, "author", "noreply@chitan-watch.local (Chitan Watch)")
         for category in event.get("change_categories") or ():
             _text(item, "category", category)

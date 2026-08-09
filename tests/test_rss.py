@@ -64,7 +64,15 @@ class RssTest(unittest.TestCase):
         item = channel.find("item")
         self.assertIn("制度 <test>", item.findtext("title"))
         self.assertIn("https://example.test/chitan/#change-detail/chg-test", item.findtext("link"))
-        self.assertIn("A &lt; B &amp; C", item.findtext("description"))
+        description = item.findtext("description") or ""
+        self.assertIn("地単公費マスターの内容変更を検知しました。", description)
+        self.assertIn("対象: 制度 <test>", description)
+        self.assertIn("重要度: 高", description)
+        self.assertIn("検知日時: 2026-08-09 09:05 JST", description)
+        self.assertIn("分類: マスター行の変更", description)
+        self.assertIn("詳細: https://example.test/chitan/#change-detail/chg-test", description)
+        self.assertNotIn("master_field_diff", description)
+        self.assertNotIn("A -> B", description)
 
     def test_rss_xml_from_store_contains_change_items(self):
         with tempfile.TemporaryDirectory() as tmpdir:
