@@ -8,6 +8,11 @@ on:
         required: false
         type: boolean
         default: false
+      enable_llm:
+        description: "Enable Gemini-backed interpretation when GEMINI_API_KEY secret is set"
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "17 21 * * *"
 
@@ -64,6 +69,8 @@ jobs:
         env:
           PYTHONPATH: crawler
           REPLAY_LATEST_RSS_ITEM: ${{ inputs.replay_latest_rss_item || false }}
+          ENABLE_LLM: ${{ inputs.enable_llm || false }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         shell: bash
         run: |
           replay_args=()
@@ -72,12 +79,17 @@ jobs:
             replay_args+=(--rss-replay-nonce "run-${GITHUB_RUN_ID}")
             replay_args+=(--rss-replay-detected-at "$(date -u +'%Y-%m-%dT%H:%M:%S+00:00')")
           fi
+          llm_args=()
+          if [ "${ENABLE_LLM}" = "true" ]; then
+            llm_args+=(--enable-llm)
+          fi
           python3 -m chitan_watch.cli export-static \
             --store-dir storage/chitan-watch \
             --output-dir public \
             --web-dir apps/web \
             --site-url "${{ steps.site.outputs.url }}" \
-            "${replay_args[@]}"
+            "${replay_args[@]}" \
+            "${llm_args[@]}"
 
       - name: Save crawler state cache
         uses: actions/cache/save@v4

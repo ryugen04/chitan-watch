@@ -209,6 +209,7 @@ class ProductSliceTest(unittest.TestCase):
             runs_status, runs_body, _ = build_api_payload("/api/runs", store)
             changes_status, changes_body, _ = build_api_payload("/api/changes", store)
             health_status, health_body, _ = build_api_payload("/api/source-health", store)
+            master_status, master_body, _ = build_api_payload("/api/master/versions", store)
         self.assertEqual(200, runs_status)
         self.assertEqual(200, changes_status)
         self.assertEqual(200, health_status)
@@ -219,6 +220,8 @@ class ProductSliceTest(unittest.TestCase):
         self.assertIn("recommended_action", changes[0]["interpretation"])
         self.assertEqual("deterministic", changes[0]["interpretation"]["generated_by"])
         self.assertEqual("run-new", json.loads(health_body)["latest_run_id"])
+        self.assertEqual(200, master_status)
+        self.assertGreaterEqual(json.loads(master_body)["version_count"], 1)
 
     def test_run_official_local_cli_smoke(self):
         env = os.environ.copy()
@@ -325,6 +328,9 @@ class ProductSliceTest(unittest.TestCase):
         self.assertIn('policy-faq', app_js)
         self.assertIn('municipality-policy-context', app_js)
         self.assertIn('自治体制度文脈更新', app_js)
+        self.assertIn('Master CSV', app_js)
+        self.assertIn('master-versions', app_js)
+        self.assertIn('llmStatus', app_js)
         self.assertIn('償還払い制度はこのマスターには含まれません', app_js)
         self.assertIn('同値性テスト', app_js)
         self.assertIn('自治体制度文脈', app_js)

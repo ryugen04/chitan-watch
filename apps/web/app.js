@@ -61,6 +61,61 @@ const fallbackState = {
     { artifact_id: "art_mhlw_faq", title: "MHLW FAQ", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "policy-faq", source_layer: "policy-faq", source_owner: "mhlw", source_role: "policy-background-and-faq-index", jurisdiction_scope: "national", monitor_mode: "source_health", notify_policy: "important_only", review_policy: "conditional" },
     { artifact_id: "art_municipality_seed", title: "札幌市 子ども医療費助成", type: "html", state: "unchanged", sha256: "fixture", error: null, source_group: "municipality-policy-context", source_layer: "municipality-policy-context", source_owner: "municipality", source_role: "local-benefit-rule-context-signal", jurisdiction_scope: "local", monitor_mode: "semantic_context_diff", notify_policy: "important_only", review_policy: "conditional" },
   ],
+  masterVersions: {
+    contract_version: 1,
+    latest_run_id: "fixture-run",
+    comparison_scope: "adjacent_observed_versions",
+    arbitrary_comparison_supported: false,
+    version_count: 2,
+    versions: [
+      {
+        version_id: "fixture-new:art_master_csv",
+        content_version_id: "sha256:fixture-new",
+        run_id: "fixture-new",
+        artifact_id: "art_master_csv",
+        is_primary_candidate: true,
+        title: "地単公費マスター確定事業一覧（令和8年8月3日時点）（CSV UTF-8）",
+        basis_date_label: "令和8年8月3日時点",
+        basis_date_iso: "2026-08-03",
+        source_url: "https://www.ssk.or.jp/fixture/master-new.csv",
+        retrieved_at: "2026-08-09T00:05:00+00:00",
+        sha256: "fixture-new",
+        content_length: 9725000,
+        parser_status: "parsed",
+        row_count: 3,
+        mapping_status: "csv_mapping_candidate_requires_review",
+        mapping_review_required: true,
+        sample_limit: 25,
+        sample_rows: [
+          { row_number: 1, identity: { prefecture_code: "13", municipality_code: "131016", public_funding_number: "80130001", program_subdivision_code: "1" }, display_fields: { item_1: "こども医療費助成 改定", item_10: "20260401", item_11: "99991231" } },
+        ],
+      },
+      { version_id: "fixture-old:art_master_csv", run_id: "fixture-old", artifact_id: "art_master_csv", title: "地単公費マスター確定事業一覧（令和8年7月21日時点）（CSV UTF-8）", basis_date_label: "令和8年7月21日時点", basis_date_iso: "2026-07-21", source_url: "https://www.ssk.or.jp/fixture/master-old.csv", retrieved_at: "2026-08-09T00:00:00+00:00", sha256: "fixture-old", parser_status: "parsed", row_count: 3, mapping_status: "csv_mapping_candidate_requires_review", mapping_review_required: true, sample_rows: [] },
+    ],
+  },
+  masterDiffs: {
+    contract_version: 1,
+    comparison_scope: "adjacent_observed_versions",
+    arbitrary_comparison_supported: false,
+    diff_count: 1,
+    diffs: [
+      { diff_id: "fixture-diff", run_id: "fixture-new", old_run_id: "fixture-old", old_version_id: "fixture-old:art_master_csv", new_version_id: "fixture-new:art_master_csv", old_basis_date_label: "令和8年7月21日時点", new_basis_date_label: "令和8年8月3日時点", status: "ok", has_changes: true, review_required: false, summary: { old_record_count: 3, new_record_count: 3, unchanged_row_count: 1, added_row_count: 1, removed_row_count: 1, modified_row_count: 1, ambiguous_group_count: 0 }, top_changed_fields: [{ field: "item_1", label: "事業名 正式名称", count: 1 }], detail_url: "static/master-diffs/fixture-diff.json" },
+    ],
+  },
+  masterDiffDetails: {
+    "fixture-diff": {
+      diff_id: "fixture-diff",
+      old_version_id: "fixture-old:art_master_csv",
+      new_version_id: "fixture-new:art_master_csv",
+      field_labels: { item_1: "事業名 正式名称", item_10: "有効開始年月日", item_11: "有効終了年月日" },
+      pagination: { total_change_count: 1, included_change_count: 1, limit: 500, truncated: false },
+      changes: [
+        { row_change_id: "rowchg-fixture", type: "row_modified", identity: { prefecture_code: "13", municipality_code: "131016", public_funding_number: "80130001", program_subdivision_code: "1" }, matching_status: "MATCHED", before_row_number: 1, after_row_number: 1, changed_field_count: 1, changed_fields: [{ field: "item_1", label: "事業名 正式名称", before: "こども医療費助成", after: "こども医療費助成 改定" }], related_change_event_ids: ["chg_fixture_ssk_master_csv"], review_required: false },
+      ],
+    },
+  },
+  llmStatus: { enabled: false, provider: "gemini", status: "disabled", reason: "GEMINI_API_KEY not set" },
+  llmInterpretations: { interpretations: [] },
   latest_run_id: "fixture-run",
   apiOnline: false,
 };
@@ -77,23 +132,42 @@ async function getJson(path) {
   return response.json();
 }
 
-async function loadDataGroup(paths) {
+async function optionalJson(path, fallback) {
+  try {
+    return await getJson(path);
+  } catch (_error) {
+    return fallback;
+  }
+}
+
+async function loadDataGroup(paths, optionalPaths = {}) {
   const [runsPayload, changesPayload, sourcePayload] = await Promise.all(paths.map(getJson));
+  const [masterVersions, masterDiffs, llmStatus, llmInterpretations] = await Promise.all([
+    optionalJson(optionalPaths.masterVersions, fallbackState.masterVersions),
+    optionalJson(optionalPaths.masterDiffs, fallbackState.masterDiffs),
+    optionalJson(optionalPaths.llmStatus, fallbackState.llmStatus),
+    optionalJson(optionalPaths.llmInterpretations, fallbackState.llmInterpretations),
+  ]);
   return {
     runs: runsPayload.runs ?? [],
     changes: changesPayload.changes ?? [],
     sources: sourcePayload.sources ?? [],
+    masterVersions,
+    masterDiffs,
+    masterDiffDetails: {},
+    llmStatus,
+    llmInterpretations,
     latest_run_id: sourcePayload.latest_run_id ?? runsPayload.runs?.[0]?.run_id ?? null,
   };
 }
 
 async function loadState() {
   try {
-    state = { ...(await loadDataGroup(["/api/runs", "/api/changes", "/api/source-health"])), apiOnline: true };
+    state = { ...(await loadDataGroup(["/api/runs", "/api/changes", "/api/source-health"], { masterVersions: "/api/master/versions", masterDiffs: "/api/master/diffs", llmStatus: "/api/llm/status", llmInterpretations: "/api/llm/interpretations" })), apiOnline: true };
     return;
   } catch (_apiError) {
     try {
-      state = { ...(await loadDataGroup(["static/runs.json", "static/changes.json", "static/source-health.json"])), apiOnline: false, staticExport: true };
+      state = { ...(await loadDataGroup(["static/runs.json", "static/changes.json", "static/source-health.json"], { masterVersions: "static/master-versions.json", masterDiffs: "static/master-diffs.json", llmStatus: "static/llm-status.json", llmInterpretations: "static/llm-interpretations.json" })), apiOnline: false, staticExport: true };
       return;
     } catch (_staticError) {
       state = fallbackState;
@@ -155,6 +229,111 @@ function impactList(change) {
   return interpretation(change).likely_impact ?? [];
 }
 
+function masterVersions() {
+  return state.masterVersions?.versions ?? [];
+}
+
+function masterDiffs() {
+  return state.masterDiffs?.diffs ?? [];
+}
+
+function latestMasterVersion() {
+  return masterVersions()[0] ?? null;
+}
+
+function masterVersionById(id) {
+  return masterVersions().find(version => version.version_id === id) ?? null;
+}
+
+function masterDiffById(id) {
+  return masterDiffs().find(diff => diff.diff_id === id) ?? null;
+}
+
+function llmInterpretationFor(targetType, targetId) {
+  return (state.llmInterpretations?.interpretations ?? []).find(item => item.target_type === targetType && item.target_id === targetId) ?? null;
+}
+
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  return Number(value).toLocaleString("ja-JP");
+}
+
+function shortHash(value) {
+  return value ? String(value).slice(0, 12) : "-";
+}
+
+function routeParts() {
+  return (location.hash.replace("#", "") || "master").split("/").map(part => decodeURIComponent(part));
+}
+
+async function loadMasterDiffDetail(diff) {
+  if (!diff) return null;
+  if (state.masterDiffDetails?.[diff.diff_id]) return state.masterDiffDetails[diff.diff_id];
+  const paths = state.apiOnline ? [`/api/master/diffs/${encodeURIComponent(diff.diff_id)}`] : [diff.detail_url || `static/master-diffs/${encodeURIComponent(diff.diff_id)}.json`];
+  for (const path of paths) {
+    try {
+      const payload = await getJson(path);
+      const detail = payload.diff ?? payload;
+      state.masterDiffDetails = { ...(state.masterDiffDetails ?? {}), [diff.diff_id]: detail };
+      return detail;
+    } catch (_error) {}
+  }
+  return null;
+}
+
+function diffCounts(summary = {}) {
+  return [
+    ["追加", summary.added_row_count],
+    ["削除", summary.removed_row_count],
+    ["変更", summary.modified_row_count],
+    ["曖昧", summary.ambiguous_group_count],
+    ["不変", summary.unchanged_row_count],
+  ];
+}
+
+function evidenceContextChips() {
+  return `<div class="context-chips"><span class="chip evidence">根拠</span><span class="chip context">関連文脈</span><span class="chip inference">解釈</span><span class="chip review">要確認</span></div>`;
+}
+
+function evidenceRefs(ids = []) {
+  const refs = ids.filter(Boolean).slice(0, 6);
+  if (!refs.length) return "";
+  return `<span class="evidence-refs">${refs.map(id => `<code>${escapeHtml(id)}</code>`).join(" ")}</span>`;
+}
+
+function evidencedText(item) {
+  if (typeof item === "string") return { text: item, evidence_ids: [] };
+  return { text: item?.text ?? "", evidence_ids: item?.evidence_ids ?? [] };
+}
+
+function renderEvidencedList(title, items = []) {
+  const rows = items.map(evidencedText).filter(item => item.text).map(item => `<li><span>${escapeHtml(item.text)}</span>${evidenceRefs(item.evidence_ids)}</li>`).join("");
+  return rows ? `<div class="llm-subsection"><h3>${escapeHtml(title)}</h3><ul>${rows}</ul></div>` : "";
+}
+
+function renderRecommendedReview(review) {
+  const item = evidencedText(review);
+  if (!item.text) return "";
+  return `<p class="action-line"><strong>推奨レビュー:</strong> ${escapeHtml(item.text)} ${evidenceRefs(item.evidence_ids)}</p>`;
+}
+
+function renderLlmBlock(llm) {
+  if (!llm) return `<p class="guide-note">Gemini解釈は未生成です。決定論的diffだけで確認できます。</p>`;
+  const output = llm.output ?? {};
+  const uncertainties = (output.uncertainties ?? []).map(item => `<li>${escapeHtml(item)}</li>`).join("");
+  return `<section class="interpretation-block">
+    <h2>LLM-assisted interpretation</h2>
+    <p>${escapeHtml(output.summary_for_humans ?? "生成済み解釈があります。")}</p>
+    ${renderEvidencedList("要点", output.key_points)}
+    ${renderEvidencedList("事実根拠", output.fact_basis)}
+    ${renderEvidencedList("推論", output.inferences)}
+    ${renderRecommendedReview(output.recommended_review)}
+    ${renderEvidencedList("併せて見る文脈", output.related_context_to_check)}
+    ${uncertainties ? `<div class="llm-subsection"><h3>不確実性</h3><ul>${uncertainties}</ul></div>` : ""}
+    <p class="meta">provider: ${escapeHtml(llm.provider)} / status: ${escapeHtml(llm.status)} / risk: ${escapeHtml(output.risk_label ?? "-")}</p>
+  </section>`;
+}
+
 function guideLink(label = "通知の見方") {
   return `<a class="guide-link" href="#guide">${escapeHtml(label)}</a>`;
 }
@@ -188,11 +367,17 @@ function selectedChange() {
   return state.changes.find(change => change.id === id) ?? state.changes[0] ?? null;
 }
 
+function relatedDiffForChange(change) {
+  return masterDiffs().find(diff => diff.run_id === change?.run_id || diff.new_run_id === change?.run_id) ?? null;
+}
+
 function renderDetail() {
   const change = selectedChange();
   if (!change) return '<section class="empty">変更詳細はまだありません。</section>';
   const evidenceRows = (change.evidence ?? []).map(item => `<tr><td>${escapeHtml(item.evidence_level)}</td><td>${escapeHtml(item.field ?? item.type)}</td><td>${escapeHtml(item.before ?? "")}</td><td>${escapeHtml(item.after ?? "")}</td><td>${escapeHtml(item.description ?? "")}</td></tr>`).join("");
   const impacts = impactList(change).map(item => `<li>${escapeHtml(item)}</li>`).join("");
+  const relatedDiff = relatedDiffForChange(change);
+  const diffLink = relatedDiff ? `<p class="action-line"><strong>CSV diff:</strong> <a href="#master-compare/${encodeURIComponent(relatedDiff.diff_id)}">${escapeHtml(relatedDiff.old_basis_date_label ?? relatedDiff.old_version_id ?? "old")} → ${escapeHtml(relatedDiff.new_basis_date_label ?? relatedDiff.new_version_id ?? "new")}</a></p>` : "";
   return `<section class="detail-panel">
     <div class="card-top"><span class="severity ${severityClass(change.severity)}">${escapeHtml(change.severity)}</span>${change.review_required ? '<span class="review-badge">Review</span>' : ""}</div>
     <h2>${escapeHtml(headline(change))}</h2>
@@ -203,6 +388,7 @@ function renderDetail() {
       <p class="action-line"><strong>推奨対応:</strong> ${escapeHtml(recommendedAction(change))}</p>
       <p class="guide-note">公費制度の背景、確度、再通知の読み方は ${guideLink("公費制度ガイド")} で確認できます。</p>
     </div>
+    ${diffLink}
     <dl class="facts"><div><dt>Run</dt><dd>${escapeHtml(change.run_id)}</dd></div><div><dt>確度</dt><dd>${escapeHtml(confidence(change))}</dd></div><div><dt>公費負担者番号</dt><dd>${escapeHtml(change.program?.public_funding_number ?? "")}</dd></div><div><dt>施行</dt><dd>${escapeHtml(change.effective_from ?? "未確定")}</dd></div></dl>
     <h2>根拠</h2>
     <table class="table"><tr><th>Level</th><th>Field</th><th>Before</th><th>After</th><th>Description</th></tr>${evidenceRows}</table>
@@ -215,8 +401,60 @@ function renderUpcoming() {
 }
 
 function renderMaster() {
-  const rows = state.changes.flatMap(change => (change.evidence ?? []).filter(item => item.type === "master_field_diff").map(item => ({ change, item })));
-  return `<section class="table-panel"><table class="table"><tr><th>自治体</th><th>制度</th><th>Field</th><th>Before</th><th>After</th><th>Level</th></tr>${rows.map(({ change, item }) => `<tr><td>${escapeHtml(place(change))}</td><td>${escapeHtml(change.program?.name ?? "")}</td><td>${escapeHtml(item.field)}</td><td>${escapeHtml(item.before ?? "")}</td><td>${escapeHtml(item.after ?? "")}</td><td>${escapeHtml(item.evidence_level)}</td></tr>`).join("")}</table></section>`;
+  const latest = latestMasterVersion();
+  const versions = masterVersions();
+  const diffs = masterDiffs();
+  const latestDiff = diffs[0] ?? null;
+  const versionRows = versions.map(version => `<tr><td><a href="#master-version/${encodeURIComponent(version.version_id)}">${escapeHtml(version.basis_date_label ?? version.version_id)}</a></td><td>${escapeHtml(version.run_id)}</td><td>${escapeHtml(formatDate(version.retrieved_at))}</td><td>${escapeHtml(formatNumber(version.row_count))}</td><td>${escapeHtml(version.parser_status)}</td><td>${version.mapping_review_required ? '<span class="review-badge">mapping review</span>' : '<span class="source-state">ok</span>'}</td><td>${escapeHtml(shortHash(version.sha256))}</td><td><a href="${escapeHtml(version.source_url)}" target="_blank" rel="noopener">公式CSV</a></td></tr>`).join("");
+  const diffRows = diffs.map(diff => `<tr><td><a href="#master-compare/${encodeURIComponent(diff.diff_id)}">${escapeHtml(diff.new_basis_date_label ?? diff.diff_id)}</a></td><td>${escapeHtml(diff.old_basis_date_label ?? "-")}</td><td>${escapeHtml(diff.status)}</td><td>${diffCounts(diff.summary).map(([label, count]) => `${label} ${formatNumber(count)}`).join(" / ")}</td><td>${diff.review_required ? '<span class="review-badge">Review</span>' : '<span class="source-state">deterministic</span>'}</td></tr>`).join("");
+  const samples = (latest?.sample_rows ?? []).map(row => `<tr><td>${escapeHtml(row.row_number)}</td><td>${escapeHtml(row.identity?.prefecture_code ?? "")}-${escapeHtml(row.identity?.municipality_code ?? "")}</td><td>${escapeHtml(row.identity?.public_funding_number ?? "")}</td><td>${escapeHtml(row.display_fields?.item_1 ?? "")}</td><td>${escapeHtml(row.display_fields?.item_10 ?? "")}</td><td>${escapeHtml(row.display_fields?.item_11 ?? "")}</td></tr>`).join("");
+  return `<section class="master-dashboard">
+    <section class="master-hero">
+      <div>
+        <p class="eyebrow">Master CSV</p>
+        <h2>${escapeHtml(latest?.title ?? "CSV版はまだありません")}</h2>
+        <p class="lead">${latest ? `${escapeHtml(latest.basis_date_label ?? "基準日未抽出")} / ${formatNumber(latest.row_count)} rows / SHA ${escapeHtml(shortHash(latest.sha256))}` : "確定事業一覧CSVの取得後に表示します。"}</p>
+      </div>
+      <div class="master-actions">${latestDiff ? `<a class="button" href="#master-compare/${encodeURIComponent(latestDiff.diff_id)}">最新diffを見る</a>` : ""}<a class="button secondary" href="#guide">見方</a></div>
+    </section>
+    <section class="kpis">
+      <div class="kpi"><span class="meta">CSV versions</span><strong>${formatNumber(versions.length)}</strong></div>
+      <div class="kpi"><span class="meta">Diff pairs</span><strong>${formatNumber(diffs.length)}</strong></div>
+      <div class="kpi"><span class="meta">Comparison</span><strong>${escapeHtml(state.masterDiffs?.comparison_scope ?? "-")}</strong></div>
+      <div class="kpi"><span class="meta">LLM</span><strong>${escapeHtml(state.llmStatus?.status ?? "unknown")}</strong></div>
+    </section>
+    <p class="page-note">CSVを入口に、版・差分・根拠・関連文脈を分けて確認します。任意2版比較は未対応で、現在は隣接する観測版のdiffを表示します。</p>
+    ${evidenceContextChips()}
+    <section class="table-panel"><h2>Version history</h2><table class="table dense"><tr><th>基準日</th><th>Run</th><th>取得</th><th>Rows</th><th>Parse</th><th>Review</th><th>SHA</th><th>Source</th></tr>${versionRows || '<tr><td colspan="8">CSV版はまだありません。</td></tr>'}</table></section>
+    <section class="table-panel"><h2>Diff index</h2><table class="table dense"><tr><th>New</th><th>Old</th><th>Status</th><th>Counts</th><th>Review</th></tr>${diffRows || '<tr><td colspan="5">比較可能なdiffはまだありません。</td></tr>'}</table></section>
+    <section class="table-panel"><h2>Current version sample</h2><table class="table dense"><tr><th>Row</th><th>自治体</th><th>公費負担者番号</th><th>制度</th><th>開始</th><th>終了</th></tr>${samples || '<tr><td colspan="6">サンプル行はありません。</td></tr>'}</table></section>
+  </section>`;
+}
+
+function renderMasterVersion() {
+  const id = routeParts()[1];
+  const version = masterVersionById(id) ?? latestMasterVersion();
+  if (!version) return '<section class="empty">CSV版はまだありません。</section>';
+  const sampleRows = (version.sample_rows ?? []).map(row => `<tr><td>${escapeHtml(row.row_number)}</td><td>${escapeHtml(row.identity?.prefecture_code ?? "")}-${escapeHtml(row.identity?.municipality_code ?? "")}</td><td>${escapeHtml(row.identity?.public_funding_number ?? "")}</td><td>${escapeHtml(row.display_fields?.item_1 ?? "")}</td><td>${escapeHtml(row.display_fields?.item_10 ?? "")}</td><td>${escapeHtml(row.display_fields?.item_11 ?? "")}</td></tr>`).join("");
+  return `<section class="detail-panel"><p class="eyebrow">CSV version</p><h2>${escapeHtml(version.title)}</h2><dl class="facts"><div><dt>Version</dt><dd>${escapeHtml(version.version_id)}</dd></div><div><dt>Basis</dt><dd>${escapeHtml(version.basis_date_label ?? "-")}</dd></div><div><dt>Rows</dt><dd>${formatNumber(version.row_count)}</dd></div><div><dt>Parser</dt><dd>${escapeHtml(version.parser_status)}</dd></div><div><dt>Mapping</dt><dd>${escapeHtml(version.mapping_status ?? "-")}</dd></div><div><dt>SHA</dt><dd>${escapeHtml(shortHash(version.sha256))}</dd></div></dl><p class="page-note">${escapeHtml(version.mapping_blocker ?? "")}</p><p><a class="button secondary" href="${escapeHtml(version.source_url)}" target="_blank" rel="noopener">公式CSVを開く</a></p><h2>Sample rows</h2><table class="table dense"><tr><th>Row</th><th>自治体</th><th>公費負担者番号</th><th>制度</th><th>開始</th><th>終了</th></tr>${sampleRows || '<tr><td colspan="6">サンプル行はありません。</td></tr>'}</table></section>`;
+}
+
+function renderCompare(detail) {
+  if (!detail) return '<section class="empty">CSV diff detailを読み込めませんでした。</section>';
+  const llm = llmInterpretationFor("master_diff", detail.diff_id);
+  const rows = (detail.changes ?? []).map(row => `<tr><td><a href="#master-row/${encodeURIComponent(detail.diff_id)}/${encodeURIComponent(row.row_change_id)}">${escapeHtml(row.type)}</a></td><td>${escapeHtml(row.identity?.prefecture_code ?? "")}-${escapeHtml(row.identity?.municipality_code ?? "")}</td><td>${escapeHtml(row.identity?.public_funding_number ?? "")}</td><td>${escapeHtml(row.changed_fields?.map(field => field.label || field.field).slice(0, 4).join(" / ") ?? "")}</td><td>${row.review_required ? '<span class="review-badge">Review</span>' : '<span class="source-state">deterministic</span>'}</td><td>${escapeHtml((row.related_change_event_ids ?? []).join(", "))}</td></tr>`).join("");
+  const topFields = (detail.top_changed_fields ?? []).map(item => `<span>${escapeHtml(item.label ?? item.field)} ${formatNumber(item.count)}</span>`).join("");
+  const llmBlock = renderLlmBlock(llm);
+  return `<section class="detail-panel"><p class="eyebrow">CSV compare</p><h2>${escapeHtml(detail.old_basis_date_label ?? detail.old_version_id ?? "old")} → ${escapeHtml(detail.new_basis_date_label ?? detail.new_version_id ?? "new")}</h2><div class="kpis">${diffCounts(detail.summary).map(([label, count]) => `<div class="kpi"><span class="meta">${escapeHtml(label)}</span><strong>${formatNumber(count)}</strong></div>`).join("")}</div><p class="page-note">比較スコープ: ${escapeHtml(detail.comparison_scope)} / 任意2版比較: ${detail.arbitrary_comparison_supported ? "対応" : "未対応"}</p>${evidenceContextChips()}<div class="tags">${topFields}</div>${llmBlock}<table class="table dense"><tr><th>Type</th><th>自治体</th><th>公費負担者番号</th><th>Changed fields</th><th>Review</th><th>ChangeEvent</th></tr>${rows || '<tr><td colspan="6">行差分はありません。</td></tr>'}</table></section>`;
+}
+
+function renderMasterRow(detail) {
+  const rowId = routeParts()[2];
+  const row = (detail?.changes ?? []).find(item => item.row_change_id === rowId);
+  if (!detail || !row) return '<section class="empty">行差分が見つかりません。</section>';
+  const fields = (row.changed_fields ?? []).map(field => `<tr><td>${escapeHtml(field.label ?? field.field)}</td><td>${escapeHtml(field.field)}</td><td>${escapeHtml(field.before ?? "")}</td><td>${escapeHtml(field.after ?? "")}</td></tr>`).join("");
+  const links = (row.related_change_event_ids ?? []).map(id => `<a href="#change-detail/${encodeURIComponent(id)}">${escapeHtml(id)}</a>`).join(" / ");
+  return `<section class="detail-panel"><p class="eyebrow">CSV row diff</p><h2>${escapeHtml(row.identity?.public_funding_number ?? row.row_change_id)}</h2><dl class="facts"><div><dt>自治体</dt><dd>${escapeHtml(row.identity?.prefecture_code ?? "")}-${escapeHtml(row.identity?.municipality_code ?? "")}</dd></div><div><dt>区分</dt><dd>${escapeHtml(row.identity?.program_subdivision_code ?? "")}</dd></div><div><dt>Before row</dt><dd>${escapeHtml(row.before_row_number ?? "-")}</dd></div><div><dt>After row</dt><dd>${escapeHtml(row.after_row_number ?? "-")}</dd></div><div><dt>Evidence</dt><dd>deterministic CSV diff</dd></div><div><dt>ChangeEvent</dt><dd>${links || "-"}</dd></div></dl>${evidenceContextChips()}<table class="table dense"><tr><th>Field</th><th>Key</th><th>Before</th><th>After</th></tr>${fields}</table></section>`;
 }
 
 function renderGuide() {
@@ -322,24 +560,37 @@ function renderSources() {
 }
 
 function titleFor(route) {
-  return ({ "changes": "Changes", "change-detail": "Change Detail", "guide": "公費制度ガイド", "upcoming": "Upcoming", "master": "Master", "sources": "Source Health" })[route] ?? "Changes";
+  return ({ "changes": "Changes", "change-detail": "Change Detail", "guide": "公費制度ガイド", "upcoming": "Upcoming", "master": "Master CSV", "master-version": "CSV Version", "master-compare": "CSV Compare", "master-row": "CSV Row", "sources": "Source Health" })[route] ?? "Master CSV";
 }
 
-function render() {
-  const route = (location.hash.replace("#", "") || "changes").split("/")[0];
-  const app = document.querySelector("#app");
-  document.querySelector("h1").textContent = titleFor(route);
-  document.querySelector(".status-pill").textContent = state.apiOnline ? "API connected" : state.staticExport ? "Static export" : "Fixture fallback";
-  app.innerHTML = ({
+async function contentForRoute(route) {
+  if (route === "master-compare") {
+    const diff = masterDiffById(routeParts()[1]) ?? masterDiffs()[0];
+    return renderCompare(await loadMasterDiffDetail(diff));
+  }
+  if (route === "master-row") {
+    const diff = masterDiffById(routeParts()[1]) ?? masterDiffs()[0];
+    return renderMasterRow(await loadMasterDiffDetail(diff));
+  }
+  return ({
     changes: renderChanges,
     "change-detail": renderDetail,
     guide: renderGuide,
     upcoming: renderUpcoming,
     master: renderMaster,
+    "master-version": renderMasterVersion,
     sources: renderSources,
-  })[route]?.() ?? renderChanges();
+  })[route]?.() ?? renderMaster();
 }
 
-addEventListener("hashchange", render);
+async function render() {
+  const route = routeParts()[0] || "master";
+  const app = document.querySelector("#app");
+  document.querySelector("h1").textContent = titleFor(route);
+  document.querySelector(".status-pill").textContent = state.apiOnline ? "API connected" : state.staticExport ? "Static export" : "Fixture fallback";
+  app.innerHTML = await contentForRoute(route);
+}
+
+addEventListener("hashchange", () => { render(); });
 await loadState();
-render();
+await render();

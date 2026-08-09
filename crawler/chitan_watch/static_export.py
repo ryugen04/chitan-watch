@@ -7,6 +7,8 @@ from pathlib import Path
 
 from .api import build_api_payload
 from .local_store import DEFAULT_STORE_DIR, LocalRunStore
+from .llm import build_llm_export_payloads
+from .master_projection import build_master_diffs_payload, detail_file_name
 from .rss import RssFeedOptions, rss_xml_from_store
 
 DEFAULT_STATIC_DIR = Path("public")
@@ -52,6 +54,8 @@ def export_static_site(
     replay_latest_rss_item: bool = False,
     rss_replay_nonce: str | None = None,
     rss_replay_detected_at: str | None = None,
+    enable_llm: bool = False,
+    llm_max_diffs: int = 5,
 ) -> StaticExportResult:
     store = LocalRunStore(store_dir)
     output = Path(output_dir)
@@ -75,10 +79,15 @@ def export_static_site(
     _write_text(output / "feeds" / "changes.xml", rss_xml)
     written.extend([output / "rss.xml", output / "feeds" / "changes.xml"])
 
+    llm_status, llm_interpretations = build_llm_export_payloads(store, enable_llm=enable_llm, max_diffs=llm_max_diffs)
     payloads = {
         "runs.json": build_api_payload("/api/runs", store, site_url=site_url),
         "changes.json": build_api_payload("/api/changes", store, site_url=site_url),
         "source-health.json": build_api_payload("/api/source-health", store, site_url=site_url),
+        "master-versions.json": build_api_payload("/api/master/versions", store, site_url=site_url),
+        "master-diffs.json": build_api_payload("/api/master/diffs", store, site_url=site_url),
+        "llm-status.json": (200, (json.dumps(llm_status, ensure_ascii=False, indent=2) + "\n").encode("utf-8"), "application/json; charset=utf-8"),
+        "llm-interpretations.json": (200, (json.dumps(llm_interpretations, ensure_ascii=False, indent=2) + "\n").encode("utf-8"), "application/json; charset=utf-8"),
         "health.json": build_api_payload("/api/health", store, site_url=site_url),
     }
     for name, payload in payloads.items():
@@ -87,6 +96,12 @@ def export_static_site(
         _status, body, _content_type = payload
         path = output / "static" / name
         _write_json_payload(path, body)
+        written.append(path)
+
+    _diff_index, diff_details = build_master_diffs_payload(store)
+    for diff_id, detail in diff_details.items():
+        path = output / "static" / "master-diffs" / detail_file_name(diff_id)
+        _write_text(path, json.dumps(detail, ensure_ascii=False, indent=2) + "\n")
         written.append(path)
 
     changes_payload = json.loads((output / "static" / "changes.json").read_text(encoding="utf-8")) if (output / "static" / "changes.json").exists() else {"changes": []}

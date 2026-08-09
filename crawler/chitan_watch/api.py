@@ -12,6 +12,8 @@ from urllib.parse import unquote, urlparse
 
 from .change_events import event_in_current_notification_scope
 from .local_store import DEFAULT_STORE_DIR, LocalRunStore
+from .llm import build_llm_export_payloads
+from .master_projection import build_master_diffs_payload, build_master_versions_payload, diff_id_from_detail_file_name
 from .rss import RssFeedOptions, event_with_interpretation, rss_xml_from_store
 
 DEFAULT_WEB_DIR = Path(__file__).resolve().parents[2] / "apps" / "web"
@@ -95,6 +97,24 @@ def build_api_payload(path: str, store: LocalRunStore, site_url: str = "http://1
                 "change_events": store.load_run_change_events_json(run_id),
             }
         )
+    if path == "/api/llm/status":
+        status, _interpretations = build_llm_export_payloads(store, enable_llm=False)
+        return json_response(status)
+    if path == "/api/llm/interpretations":
+        _status, interpretations = build_llm_export_payloads(store, enable_llm=False)
+        return json_response(interpretations)
+    if path == "/api/master/versions":
+        return json_response(build_master_versions_payload(store))
+    if path == "/api/master/diffs":
+        diff_index, _details = build_master_diffs_payload(store)
+        return json_response(diff_index)
+    if path.startswith("/api/master/diffs/"):
+        raw_diff_id = unquote(path.removeprefix("/api/master/diffs/")).strip("/")
+        diff_id = diff_id_from_detail_file_name(raw_diff_id) if raw_diff_id.endswith(".json") else raw_diff_id
+        _diff_index, details = build_master_diffs_payload(store)
+        if diff_id in details:
+            return json_response({"diff": details[diff_id]})
+        return json_response({"error": "master diff not found"}, status=404)
     if path == "/api/changes":
         return json_response({"changes": _event_items(store)})
     if path.startswith("/api/changes/"):

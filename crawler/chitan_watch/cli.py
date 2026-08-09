@@ -149,6 +149,8 @@ def main() -> int:
     export_static_cmd.add_argument("--replay-latest-rss-item", action="store_true", help="Add a labeled replay of the latest real change event to the RSS feed")
     export_static_cmd.add_argument("--rss-replay-nonce", default=None, help="Stable nonce used in the replay RSS GUID")
     export_static_cmd.add_argument("--rss-replay-detected-at", default=None, help="ISO datetime used as the replay RSS pubDate")
+    export_static_cmd.add_argument("--enable-llm", action="store_true", help="Enable optional Gemini-backed interpretation during static export")
+    export_static_cmd.add_argument("--llm-max-diffs", type=int, default=5, help="Maximum master diff details to send to the LLM provider")
 
     args = parser.parse_args()
 
@@ -352,6 +354,8 @@ def main() -> int:
             replay_latest_rss_item=args.replay_latest_rss_item,
             rss_replay_nonce=args.rss_replay_nonce,
             rss_replay_detected_at=args.rss_replay_detected_at,
+            enable_llm=args.enable_llm,
+            llm_max_diffs=args.llm_max_diffs,
         )
         print(json.dumps(result, default=encode, ensure_ascii=False, indent=2))
         return 0

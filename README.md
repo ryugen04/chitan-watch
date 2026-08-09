@@ -213,6 +213,52 @@ PYTHONPATH=crawler python3 -m chitan_watch.cli serve \
 Then open `http://127.0.0.1:8765`. The Web UI reads `/api/runs`, `/api/changes`, and `/api/source-health`; if the API is unavailable, it falls back to fixture data.
 
 
+## Master CSV Version and Diff Payloads
+
+Static export now publishes CSV-first data products for the Web viewer:
+
+```text
+static/master-versions.json
+static/master-diffs.json
+static/master-diffs/<diff_id>.json
+```
+
+The first comparison scope is adjacent observed versions. Arbitrary two-version comparison is intentionally deferred. Public payloads expose official URLs, hashes, parser status, row counts, bounded sample rows, and field-level diff details, but not local `storage/**` paths.
+
+## Gemini Interpretation Setup
+
+Gemini is optional and runs only during server-side/local/static export, never in browser JavaScript. Without a key, export still succeeds and writes `static/llm-status.json` with disabled status.
+
+For local manual export, keep the key out of shell history. Put it in an ignored local env file such as `.env.local`:
+
+```text
+GEMINI_API_KEY=your-key-here
+```
+
+Then load it without printing the value and run export:
+
+```bash
+set -a
+. ./.env.local
+set +a
+PYTHONPATH=crawler python3 -m chitan_watch.cli export-static \
+  --store-dir storage/chitan-watch \
+  --output-dir public \
+  --web-dir apps/web \
+  --site-url https://example.test/chitan-watch \
+  --enable-llm
+```
+
+Do not commit `.env.local`, paste the key into scripts, or expose it in browser/static assets.
+
+For GitHub Actions, set the repository secret:
+
+```text
+Settings -> Secrets and variables -> Actions -> New repository secret -> GEMINI_API_KEY
+```
+
+Then run the `Publish static Chitan Watch feed` workflow with `enable_llm` checked. Gemini output is stored as generated interpretation metadata in `static/llm-interpretations.json`; deterministic CSV diff evidence remains the source of truth. Each key point, factual basis, inference, review recommendation, and related context entry must carry provided evidence ids such as a diff id, row change id, or official source URL.
+
 ## RSS Subscription
 
 When the local server is running, RSS readers can subscribe to:
