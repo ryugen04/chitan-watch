@@ -91,7 +91,7 @@ class StaticExportTest(unittest.TestCase):
             self.assertIn("対象:", description)
             self.assertIn("重要度: ", description)
             self.assertIn("詳細: https://example.test/chitan-watch/#change-detail/", description)
-            self.assertIn("通知の見方: https://example.test/chitan-watch/#guide", description)
+            self.assertIn("背景知識と通知の見方: https://example.test/chitan-watch/#guide", description)
             self.assertNotIn("artifact_snapshot", description)
             self.assertNotIn("Manual delivery replay", description)
             self.assertNotIn("->", description)
@@ -103,9 +103,10 @@ class StaticExportTest(unittest.TestCase):
         self.assertIn("static/changes.json", app_js)
         self.assertIn("Static export", app_js)
         self.assertIn("renderGuide", app_js)
-        self.assertIn("通知で見る順番", app_js)
-        self.assertIn("GitHub Pages に Web ページ、JSON、RSS", app_js)
-        self.assertIn("更新の価値観", app_js)
+        self.assertIn("公費制度の入口", app_js)
+        self.assertIn("地単公費マスターとは", app_js)
+        self.assertIn("GitHub Pages で静的ファイル", app_js)
+        self.assertIn("通知は作業命令ではありません", app_js)
 
 
 if __name__ == "__main__":

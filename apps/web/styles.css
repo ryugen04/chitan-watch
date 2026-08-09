@@ -94,6 +94,9 @@ h1 { margin: 0; font-size: 30px; letter-spacing: 0; }
 .term-list div:first-child { border-top: 0; padding-top: 0; }
 .term-list dt { font-weight: 700; }
 .term-list dd { margin: 4px 0 0; color: var(--muted); }
+.source-list { margin: 8px 0 0; padding-left: 20px; }
+.source-list a { color: var(--accent); text-decoration: none; font-weight: 700; }
+.source-list a:hover { text-decoration: underline; }
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .meta { color: var(--muted); font-size: 13px; }
 .severity, .review-badge, .tags span, .source-state {

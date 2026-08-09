@@ -164,7 +164,7 @@ function renderChanges() {
     <p class="meta">確度: ${escapeHtml(confidence(change))} / 施行: ${escapeHtml(change.effective_from ?? "未確定")} / 検知: ${escapeHtml(formatDate(change.detected_at))}</p>
     <div class="tags">${(change.change_categories ?? []).map(item => `<span>${escapeHtml(item)}</span>`).join("")}</div>
   </article>`).join("");
-  return `${kpis()}<p class="page-note">通知の読み方や確認順は ${guideLink("Guide")} にまとめています。</p><div class="grid">${rows || '<section class="empty">変更はまだありません。</section>'}</div>`;
+  return `${kpis()}<p class="page-note">公費制度、データ構造、通知の読み方は ${guideLink("公費制度ガイド")} にまとめています。</p><div class="grid">${rows || '<section class="empty">変更はまだありません。</section>'}</div>`;
 }
 
 function selectedChange() {
@@ -186,7 +186,7 @@ function renderDetail() {
       <h2>解釈</h2>
       <ul>${impacts || '<li>想定影響はまだ整理されていません。</li>'}</ul>
       <p class="action-line"><strong>推奨対応:</strong> ${escapeHtml(recommendedAction(change))}</p>
-      <p class="guide-note">確度や再通知の読み方は ${guideLink("Guide")} で確認できます。</p>
+      <p class="guide-note">公費制度の背景、確度、再通知の読み方は ${guideLink("公費制度ガイド")} で確認できます。</p>
     </div>
     <dl class="facts"><div><dt>Run</dt><dd>${escapeHtml(change.run_id)}</dd></div><div><dt>確度</dt><dd>${escapeHtml(confidence(change))}</dd></div><div><dt>公費負担者番号</dt><dd>${escapeHtml(change.program?.public_funding_number ?? "")}</dd></div><div><dt>施行</dt><dd>${escapeHtml(change.effective_from ?? "未確定")}</dd></div></dl>
     <h2>根拠</h2>
@@ -207,69 +207,105 @@ function renderMaster() {
 function renderGuide() {
   return `<section class="guide-panel">
     <section class="guide-intro">
-      <p class="lead">Chitan Watch は、社会保険診療報酬支払基金が公開する地単公費マスター関連資料を確認し、変更候補を通知するための監視ページです。</p>
-      <p>通知は業務判断の入口です。確度、想定影響、推奨対応を読み、担当範囲に関係するものを公式ソースで確認します。</p>
+      <p class="eyebrow">公費制度ガイド</p>
+      <p class="lead">Chitan Watch は、地方自治体の医療費助成制度に関わる地単公費マスターの公開資料を追い、変更候補を理解しやすい形で届けるための静的監視サイトです。</p>
+      <p>初めて見る人が迷いやすいのは、通知そのものよりも「公費とは何か」「マスターのどの列が業務に効くのか」「公式ファイルの更新をどこまで信じてよいのか」です。このページでは、その前提から順に整理します。</p>
+    </section>
+    <section class="guide-section guide-wide">
+      <h2>公費制度の入口</h2>
+      <p>医療機関の窓口では、健康保険だけでなく、国や自治体の助成制度によって患者負担が軽くなることがあります。地単公費は、地方自治体が独自に実施する医療費助成事業を扱う領域です。こども医療、ひとり親家庭、重度心身障害者など、自治体ごとに名称、対象者、負担方法、開始日が異なります。</p>
+      <p>支払基金の地単公費関連ページでは、地方単独医療費助成事業を扱うマスター、事業一覧、登録や変更のための資料が公開されています。Chitan Watch は、この公開資料を起点にしています。</p>
     </section>
     <section class="guide-section guide-wide">
       <h2>全体像</h2>
       <ol class="flow-list">
-        <li><strong>公式ソース</strong><span>社会保険診療報酬支払基金の公開ページから、CSV や PDF などの地単公費マスター関連ファイルを見つけます。</span></li>
-        <li><strong>取得と保存</strong><span>GitHub Actions が定期実行し、取得したファイルのハッシュ、取得時刻、実行結果を run として保存します。</span></li>
-        <li><strong>差分検知</strong><span>前回の run と今回の run を比べ、公開ファイルの追加、更新、削除、マスター行の追加や変更を change として整理します。</span></li>
-        <li><strong>解釈</strong><span>ルールベースの判定で見出し、想定影響、推奨対応、確度を付けます。現在の公開版では外部 LLM に判断を任せていません。</span></li>
-        <li><strong>配信</strong><span>GitHub Pages に Web ページ、JSON、RSS を静的ファイルとして公開し、Slack などの RSS リーダーから購読できる形にします。</span></li>
+        <li><strong>制度</strong><span>自治体が医療費助成事業を設計します。対象者、自己負担、所得制限、現物給付か償還払いかといった運用条件が制度の中身です。</span></li>
+        <li><strong>マスター</strong><span>制度を医療機関やシステムが扱えるよう、公費負担者番号、制度名、都道府県や市町村、施行日、分類などの行データにします。</span></li>
+        <li><strong>公開資料</strong><span>支払基金などの公式サイトに、CSV、Excel、PDF、ZIP 形式の資料が掲載されます。ファイル名や掲載日が業務上の手がかりになります。</span></li>
+        <li><strong>検知</strong><span>GitHub Actions が公開ページを確認し、前回保存したファイルやマスター行と比べます。ファイル追加、更新、削除、行変更を change として記録します。</span></li>
+        <li><strong>判断</strong><span>通知は作業命令ではありません。担当システムの取込対象か、公式資料で根拠を確認できるか、社内手順に進めるかを人が判断します。</span></li>
       </ol>
     </section>
     <div class="guide-grid">
       <article class="guide-section">
-        <h2>何を見ているか</h2>
-        <p>公開元は社会保険診療報酬支払基金の公式ページです。ページ内のリンク、ファイル種別、ファイル本文のハッシュ、地単公費マスターの行内容を確認します。</p>
+        <h2>地単公費マスターとは</h2>
+        <p>制度をコンピューターが扱うための一覧表です。自治体名や制度名だけでは請求処理に使いにくいため、公費負担者番号、制度分類、適用期間などをそろえた形で管理します。</p>
+      </article>
+      <article class="guide-section">
+        <h2>行データの見方</h2>
+        <dl class="term-list">
+          <div><dt>公費負担者番号</dt><dd>制度を識別するための番号です。請求、資格確認、マスター取込で重要なキーになります。</dd></div>
+          <div><dt>自治体コード</dt><dd>都道府県や市町村を表します。同じ制度名でも自治体が違えば別の扱いになります。</dd></div>
+          <div><dt>施行日</dt><dd>制度やマスター行がいつから効くかを示します。通知日と施行日は別の概念です。</dd></div>
+        </dl>
+      </article>
+      <article class="guide-section">
+        <h2>現物給付と償還払い</h2>
+        <p>現物給付は、窓口や請求の時点で助成を反映する運用です。償還払いは、患者がいったん支払い、後から自治体へ申請して払い戻しを受ける運用です。マスター監視で特に問題になりやすいのは、システム処理に乗る現物給付側です。</p>
+      </article>
+      <article class="guide-section">
+        <h2>Chitan Watch の設計</h2>
+        <p>サイトはサーバーを持たず、GitHub Pages で静的ファイルとして公開します。定期実行で生成した JSON を画面が読み、RSS は同じ変更データから作ります。Slack などの RSS 購読先は、この静的 RSS を読むだけです。</p>
+      </article>
+      <article class="guide-section">
+        <h2>データの構造</h2>
+        <dl class="term-list">
+          <div><dt>run</dt><dd>ある時点のクロール実行です。取得時刻、成功状態、検知数、ソース状態を持ちます。</dd></div>
+          <div><dt>source</dt><dd>確認対象の公式ページや公開ファイルです。取得失敗やハッシュ変化もここで見ます。</dd></div>
+          <div><dt>change</dt><dd>利用者が読む通知単位です。severity、confidence、evidence、recommended action を持ちます。</dd></div>
+          <div><dt>evidence</dt><dd>変更候補の根拠です。差分項目、前後値、公式ソース URL、確認レベルを残します。</dd></div>
+        </dl>
+      </article>
+      <article class="guide-section">
+        <h2>解釈の境界</h2>
+        <p>現在の公開版では、外部 LLM に判断を任せていません。見出し、想定影響、推奨対応、確度はルールベースで付けています。制度の最終判断、請求可否、施設ごとの運用判断は公式資料と社内手順で確認します。</p>
       </article>
       <article class="guide-section">
         <h2>通知で見る順番</h2>
         <ol>
           <li>対象の自治体、制度名、ファイル名を確認します。</li>
-          <li>確度が CONFIRMED か、確認が必要な状態かを見ます。</li>
-          <li>想定影響と推奨対応を読み、社内の更新手順に進むか判断します。</li>
+          <li>施行日と検知日時を分けて見ます。</li>
+          <li>確度、想定影響、推奨対応を読みます。</li>
+          <li>Detail の根拠と公式ソースを確認します。</li>
         </ol>
-      </article>
-      <article class="guide-section">
-        <h2>画面の構造</h2>
-        <dl class="term-list">
-          <div><dt>Changes</dt><dd>検知された change の一覧です。通知から来たときの入口になります。</dd></div>
-          <div><dt>Detail</dt><dd>選んだ change の根拠、推奨対応、確度、差分項目を確認します。</dd></div>
-          <div><dt>Source Health</dt><dd>公式ソースを取得できたか、ファイル状態が変わったかを確認します。</dd></div>
-        </dl>
       </article>
       <article class="guide-section">
         <h2>確度の意味</h2>
         <dl class="term-list">
-          <div><dt>CONFIRMED</dt><dd>公式ソースや差分から変更候補を確認できた状態です。</dd></div>
-          <div><dt>UNRESOLVED</dt><dd>候補はありますが、人の確認が必要な状態です。</dd></div>
+          <div><dt>CONFIRMED</dt><dd>公式ソースや差分から変更候補を確認できた状態です。業務反映の前には対象システムとの対応を確認します。</dd></div>
+          <div><dt>UNRESOLVED</dt><dd>候補はありますが、対応関係や行の同一性に人の確認が必要な状態です。</dd></div>
           <div><dt>INFO</dt><dd>参考情報として扱う通知です。すぐに更新作業へ進むとは限りません。</dd></div>
         </dl>
       </article>
       <article class="guide-section">
-        <h2>想定影響</h2>
-        <p>請求、資格確認、患者登録、マスター取込に関係する可能性を示します。影響は施設やシステム構成で変わるため、通知だけで作業完了とは判断しません。</p>
+        <h2>更新の流れ</h2>
+        <p>自治体側の制度変更があり、公式資料が更新され、Chitan Watch が差分を検知し、RSS と画面に反映されます。通知が来た時点では、制度変更そのものがすでに始まっている場合も、将来の施行に向けた準備期間の場合もあります。</p>
       </article>
       <article class="guide-section">
-        <h2>推奨対応</h2>
-        <p>CONFIRMED の通知は、公式ページと対象ファイルを確認し、必要に応じて社内マスターや運用メモを更新します。UNRESOLVED の通知は、差分候補の対応関係を人が確認します。</p>
+        <h2>業務での受け止め方</h2>
+        <p>通知は「調べるべき候補」を早く見つけるためのものです。マスター取込、資格確認、患者登録、請求点検のどれに関係するかを切り分け、施設やベンダーの更新手順に沿って扱います。</p>
       </article>
       <article class="guide-section">
         <h2>再通知と実変更</h2>
         <p>再通知は、同じ変更候補を改めて知らせるものです。実変更は、公開元の内容やファイルが前回確認時から変わったものです。再通知だけであれば、すぐにマスター更新が必要とは限りません。</p>
       </article>
       <article class="guide-section">
-        <h2>更新の価値観</h2>
-        <p>このページは、変更を見逃さないための早期検知を重視します。通知は作業命令ではなく、確認すべき入口です。公式ソースで根拠を確認し、施設の運用手順に合わせて反映可否を決めます。</p>
+        <h2>よくある読み違い</h2>
+        <p>公費負担者番号だけで制度や作業内容を決めると、自治体、適用期間、制度分類の違いを見落とします。ファイルの公開日、検知日時、施行日も別の意味を持ちます。</p>
       </article>
       <article class="guide-section">
         <h2>具体例</h2>
-        <p>公開ファイル追加の通知なら、まず対象ファイルが利用中の取込対象かを見ます。マスター行変更の通知なら、制度名、公費負担者番号、施行日、差分項目を確認します。</p>
+        <p>「地単公費マスター確定事業一覧」の CSV が追加された通知なら、まず自施設が取り込む対象かを見ます。マスター行変更なら、公費負担者番号、制度名、自治体、施行日、差分項目を Detail で確認します。</p>
       </article>
     </div>
+    <section class="guide-section guide-wide">
+      <h2>情報源</h2>
+      <ul class="source-list">
+        <li><a href="https://www.ssk.or.jp/seikyushiharai/chitan/chitan_01.html" target="_blank" rel="noopener">社会保険診療報酬支払基金 地方単独医療費助成事業関連情報</a></li>
+        <li><a href="https://shinryohoshu.mhlw.go.jp/shinryohoshu/" target="_blank" rel="noopener">診療報酬情報提供サービス</a></li>
+        <li><a href="https://www.mhlw.go.jp/" target="_blank" rel="noopener">厚生労働省</a></li>
+      </ul>
+    </section>
   </section>`;
 }
 
@@ -280,7 +316,7 @@ function renderSources() {
 }
 
 function titleFor(route) {
-  return ({ "changes": "Changes", "change-detail": "Change Detail", "guide": "Guide", "upcoming": "Upcoming", "master": "Master", "sources": "Source Health" })[route] ?? "Changes";
+  return ({ "changes": "Changes", "change-detail": "Change Detail", "guide": "公費制度ガイド", "upcoming": "Upcoming", "master": "Master", "sources": "Source Health" })[route] ?? "Changes";
 }
 
 function render() {

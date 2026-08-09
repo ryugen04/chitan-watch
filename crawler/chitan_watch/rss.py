@@ -207,7 +207,7 @@ def _item_description(event: dict, detail_link: str, guide_link: str) -> str:
         lines.append("確認: 管理者レビューが必要です。")
     lines.extend([
         f"詳細: {detail_link}",
-        f"通知の見方: {guide_link}",
+        f"背景知識と通知の見方: {guide_link}",
         "出典: 社会保険診療報酬支払基金",
     ])
     return "\n".join(lines)
