@@ -255,7 +255,11 @@ def build_llm_export_payloads(store, enable_llm: bool = False, provider: LLMProv
     failures = []
     request_count = 0
     changed_details = [(diff_id, detail) for diff_id, detail in details.items() if detail.get("has_changes")]
-    for diff_id, detail in changed_details[:max_diffs]:
+    target_details = changed_details[:max_diffs]
+    if not target_details and details:
+        latest_diff_id, latest_detail = next(iter(details.items()))
+        target_details = [(latest_diff_id, latest_detail)]
+    for diff_id, detail in target_details:
         request_count += 1
         try:
             output = provider.interpret_master_diff(detail)

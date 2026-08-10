@@ -131,6 +131,38 @@ class LLMTest(unittest.TestCase):
         self.assertEqual(["changed-1"], provider.seen)
         self.assertEqual("changed-1", interpretations["interpretations"][0]["target_id"])
 
+    def test_llm_export_interprets_latest_no_change_diff_when_no_changed_diff_exists(self):
+        class MockProvider:
+            model = "mock-gemini"
+
+            def __init__(self):
+                self.seen = []
+
+            def interpret_master_diff(self, diff_detail):
+                self.seen.append(diff_detail["diff_id"])
+                return {
+                    "summary_for_humans": "最新観測ではCSV内容差分はありません。",
+                    "key_points": [{"text": "行差分は0件です。", "evidence_ids": [diff_detail["diff_id"]]}],
+                    "fact_basis": [{"text": "決定論的diffで変更なしです。", "evidence_ids": [diff_detail["diff_id"]]}],
+                    "inferences": [{"text": "今回のRSSでは新規の制度差分通知は不要です。", "evidence_ids": [diff_detail["diff_id"]]}],
+                    "uncertainties": [],
+                    "recommended_review": {"text": "基準日と公式CSV URLだけ確認してください。", "evidence_ids": [diff_detail["new_source_url"]]},
+                    "related_context_to_check": [{"text": "公式CSV", "evidence_ids": [diff_detail["new_source_url"]]}],
+                    "risk_label": "low",
+                }
+
+        provider = MockProvider()
+        details = {
+            "unchanged-latest": {"diff_id": "unchanged-latest", "has_changes": False, "new_source_url": "https://example.test/latest.csv", "summary": {"modified_row_count": 0}, "changes": []},
+            "unchanged-older": {"diff_id": "unchanged-older", "has_changes": False, "new_source_url": "https://example.test/older.csv", "summary": {"modified_row_count": 0}, "changes": []},
+        }
+        with patch("chitan_watch.llm.build_master_diffs_payload", return_value=({"diffs": []}, details)):
+            status, interpretations = build_llm_export_payloads(object(), enable_llm=True, provider=provider, max_diffs=5)
+        self.assertEqual("success", status["status"])
+        self.assertEqual(1, status["request_count"])
+        self.assertEqual(["unchanged-latest"], provider.seen)
+        self.assertEqual("low", interpretations["interpretations"][0]["output"]["risk_label"])
+
     def test_llm_export_payloads_with_mock_provider(self):
         class MockProvider:
             model = "mock-gemini"
