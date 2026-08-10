@@ -254,12 +254,11 @@ def build_llm_export_payloads(store, enable_llm: bool = False, provider: LLMProv
     interpretations = []
     failures = []
     request_count = 0
-    for diff_id, detail in list(details.items())[:max_diffs]:
-        if not detail.get("has_changes"):
-            continue
+    changed_details = [(diff_id, detail) for diff_id, detail in details.items() if detail.get("has_changes")]
+    for diff_id, detail in changed_details[:max_diffs]:
+        request_count += 1
         try:
             output = provider.interpret_master_diff(detail)
-            request_count += 1
             interpretations.append({
                 "target_type": "master_diff",
                 "target_id": diff_id,

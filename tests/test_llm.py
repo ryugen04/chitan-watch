@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from chitan_watch.llm import (
     DisabledLLMProvider,
@@ -96,6 +97,39 @@ class LLMTest(unittest.TestCase):
         self.assertFalse(status["enabled"])
         self.assertEqual("disabled", status["status"])
         self.assertEqual([], interpretations["interpretations"])
+
+    def test_llm_export_selects_changed_diffs_before_applying_cap(self):
+        class MockProvider:
+            model = "mock-gemini"
+
+            def __init__(self):
+                self.seen = []
+
+            def interpret_master_diff(self, diff_detail):
+                self.seen.append(diff_detail["diff_id"])
+                return {
+                    "summary_for_humans": f"{diff_detail['diff_id']} の差分です。",
+                    "key_points": [{"text": "変更があります。", "evidence_ids": [diff_detail["diff_id"]]}],
+                    "fact_basis": [{"text": "変更ありdiff", "evidence_ids": [diff_detail["diff_id"]]}],
+                    "inferences": [{"text": "確認対象です。", "evidence_ids": [diff_detail["diff_id"]]}],
+                    "uncertainties": [],
+                    "recommended_review": {"text": "CSV差分を確認してください。", "evidence_ids": [diff_detail["diff_id"]]},
+                    "related_context_to_check": [{"text": "公式CSV", "evidence_ids": [diff_detail["new_source_url"]]}],
+                    "risk_label": "needs_review",
+                }
+
+        provider = MockProvider()
+        details = {
+            "unchanged-1": {"diff_id": "unchanged-1", "has_changes": False, "new_source_url": "https://example.test/1.csv", "summary": {}, "changes": []},
+            "unchanged-2": {"diff_id": "unchanged-2", "has_changes": False, "new_source_url": "https://example.test/2.csv", "summary": {}, "changes": []},
+            "changed-1": {"diff_id": "changed-1", "has_changes": True, "new_source_url": "https://example.test/3.csv", "summary": {"modified_row_count": 1}, "changes": []},
+        }
+        with patch("chitan_watch.llm.build_master_diffs_payload", return_value=({"diffs": []}, details)):
+            status, interpretations = build_llm_export_payloads(object(), enable_llm=True, provider=provider, max_diffs=1)
+        self.assertEqual("success", status["status"])
+        self.assertEqual(1, status["request_count"])
+        self.assertEqual(["changed-1"], provider.seen)
+        self.assertEqual("changed-1", interpretations["interpretations"][0]["target_id"])
 
     def test_llm_export_payloads_with_mock_provider(self):
         class MockProvider:
