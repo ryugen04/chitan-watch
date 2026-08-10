@@ -15,24 +15,24 @@ from .models import ChangeBundle
 DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 DEFAULT_GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta"
 EVIDENCED_TEXT_SCHEMA = {
-    "type": "object",
+    "type": "OBJECT",
     "properties": {
-        "text": {"type": "string"},
-        "evidence_ids": {"type": "array", "items": {"type": "string"}},
+        "text": {"type": "STRING"},
+        "evidence_ids": {"type": "ARRAY", "items": {"type": "STRING"}},
     },
     "required": ["text", "evidence_ids"],
 }
 LLM_INTERPRETATION_SCHEMA = {
-    "type": "object",
+    "type": "OBJECT",
     "properties": {
-        "summary_for_humans": {"type": "string"},
-        "key_points": {"type": "array", "items": EVIDENCED_TEXT_SCHEMA},
-        "fact_basis": {"type": "array", "items": EVIDENCED_TEXT_SCHEMA},
-        "inferences": {"type": "array", "items": EVIDENCED_TEXT_SCHEMA},
-        "uncertainties": {"type": "array", "items": {"type": "string"}},
+        "summary_for_humans": {"type": "STRING"},
+        "key_points": {"type": "ARRAY", "items": EVIDENCED_TEXT_SCHEMA},
+        "fact_basis": {"type": "ARRAY", "items": EVIDENCED_TEXT_SCHEMA},
+        "inferences": {"type": "ARRAY", "items": EVIDENCED_TEXT_SCHEMA},
+        "uncertainties": {"type": "ARRAY", "items": {"type": "STRING"}},
         "recommended_review": EVIDENCED_TEXT_SCHEMA,
-        "related_context_to_check": {"type": "array", "items": EVIDENCED_TEXT_SCHEMA},
-        "risk_label": {"type": "string", "enum": ["low", "medium", "high", "needs_review"]},
+        "related_context_to_check": {"type": "ARRAY", "items": EVIDENCED_TEXT_SCHEMA},
+        "risk_label": {"type": "STRING", "enum": ["low", "medium", "high", "needs_review"]},
     },
     "required": ["summary_for_humans", "key_points", "fact_basis", "inferences", "uncertainties", "recommended_review", "related_context_to_check", "risk_label"],
 }
@@ -114,7 +114,7 @@ class GeminiLLMProvider:
                 "temperature": 0.2,
                 "responseFormat": {
                     "text": {
-                        "mimeType": "application/json",
+                        "mimeType": "APPLICATION_JSON",
                         "schema": LLM_INTERPRETATION_SCHEMA,
                     },
                 },

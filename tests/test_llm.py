@@ -92,8 +92,9 @@ class LLMTest(unittest.TestCase):
         self.assertNotIn("secret-key", request.full_url)
         body = json.loads(request.data.decode("utf-8"))
         response_format = body["generationConfig"]["responseFormat"]["text"]
-        self.assertEqual("application/json", response_format["mimeType"])
+        self.assertEqual("APPLICATION_JSON", response_format["mimeType"])
         self.assertIn("schema", response_format)
+        self.assertEqual("OBJECT", response_format["schema"]["type"])
 
     def test_llm_export_payloads_disabled_without_key(self):
         with tempfile.TemporaryDirectory() as tmpdir:
