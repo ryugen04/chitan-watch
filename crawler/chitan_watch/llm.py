@@ -12,7 +12,7 @@ from typing import Any, Mapping, Protocol
 from .master_projection import build_master_diffs_payload
 from .models import ChangeBundle
 
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 DEFAULT_GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta"
 EVIDENCED_TEXT_SCHEMA = {
     "type": "object",
@@ -112,8 +112,12 @@ class GeminiLLMProvider:
             ],
             "generationConfig": {
                 "temperature": 0.2,
-                "responseMimeType": "application/json",
-                "responseJsonSchema": LLM_INTERPRETATION_SCHEMA,
+                "responseFormat": {
+                    "text": {
+                        "mimeType": "application/json",
+                        "schema": LLM_INTERPRETATION_SCHEMA,
+                    },
+                },
             },
         }
         encoded = json.dumps(body, ensure_ascii=False).encode("utf-8")

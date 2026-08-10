@@ -35,7 +35,7 @@ Optional compatibility:
 GOOGLE_API_KEY
 ```
 
-`GEMINI_API_KEY` wins if both are set.
+`GEMINI_API_KEY` wins if both are set. The default model is `gemini-3.6-flash`; override with `GEMINI_MODEL` only after confirming model availability for the key/project.
 
 ## Security Rules
 

@@ -88,7 +88,12 @@ class LLMTest(unittest.TestCase):
         request, timeout = opener.requests[0]
         self.assertEqual(20, timeout)
         self.assertIn("generateContent", request.full_url)
+        self.assertIn("gemini-3.6-flash", request.full_url)
         self.assertNotIn("secret-key", request.full_url)
+        body = json.loads(request.data.decode("utf-8"))
+        response_format = body["generationConfig"]["responseFormat"]["text"]
+        self.assertEqual("application/json", response_format["mimeType"])
+        self.assertIn("schema", response_format)
 
     def test_llm_export_payloads_disabled_without_key(self):
         with tempfile.TemporaryDirectory() as tmpdir:

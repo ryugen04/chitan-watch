@@ -257,7 +257,7 @@ For GitHub Actions, set the repository secret:
 Settings -> Secrets and variables -> Actions -> New repository secret -> GEMINI_API_KEY
 ```
 
-Then run the `Publish static Chitan Watch feed` workflow with `enable_llm` checked. Gemini output is stored as generated interpretation metadata in `static/llm-interpretations.json`; deterministic CSV diff evidence remains the source of truth. Each key point, factual basis, inference, review recommendation, and related context entry must carry provided evidence ids such as a diff id, row change id, or official source URL.
+Then run the `Publish static Chitan Watch feed` workflow with `enable_llm` checked. Gemini output uses `gemini-3.6-flash` by default and is stored as generated interpretation metadata in `static/llm-interpretations.json`; deterministic CSV diff evidence remains the source of truth. Each key point, factual basis, inference, review recommendation, and related context entry must carry provided evidence ids such as a diff id, row change id, or official source URL.
 
 ## RSS Subscription
 
