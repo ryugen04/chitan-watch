@@ -129,11 +129,24 @@ class GeminiLLMProvider:
                 with self.opener(request, timeout=self.timeout_seconds) as response:
                     raw = json.loads(response.read().decode("utf-8"))
                 return _extract_json_from_gemini_response(raw)
-            except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
+            except urllib.error.HTTPError as exc:
+                last_error = _describe_http_error(exc)
+                if attempt < self.retry_count:
+                    time.sleep(0.5)
+            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
                 last_error = exc
                 if attempt < self.retry_count:
                     time.sleep(0.5)
         raise RuntimeError(f"Gemini request failed with API key {_redacted(self.api_key)}: {last_error}")
+
+
+def _describe_http_error(exc: urllib.error.HTTPError) -> str:
+    try:
+        body = exc.read().decode("utf-8", errors="replace")
+    except Exception:
+        body = ""
+    body = _safe_error_text(body)
+    return f"HTTP {exc.code} {exc.reason}: {body[:1000]}" if body else f"HTTP {exc.code} {exc.reason}"
 
 
 def load_llm_provider_from_env(env: Mapping[str, str] = os.environ) -> LLMProvider:
@@ -286,5 +299,8 @@ def build_llm_export_payloads(store, enable_llm: bool = False, provider: LLMProv
 
 
 def _safe_error(exc: Exception) -> str:
-    text = str(exc)
+    return _safe_error_text(str(exc))
+
+
+def _safe_error_text(text: str) -> str:
     return text.replace(os.environ.get("GEMINI_API_KEY", "__missing__"), "<redacted>").replace(os.environ.get("GOOGLE_API_KEY", "__missing__"), "<redacted>")
